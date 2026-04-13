@@ -15,20 +15,24 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: white; margin: 0; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        [color-scheme="dark"]::-webkit-calendar-picker-indicator { filter: invert(1); }
-        .mobile-menu-enter { animation: slideDown 0.3s ease-out forwards; }
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         .text-glow { text-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+        
+        /* Стили для календаря */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+        .calendar-day { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 9999px; font-size: 0.875rem; transition: all 0.2s; }
+        .calendar-day:hover:not(.empty) { background-color: rgba(168, 85, 247, 0.2); }
+        .day-selected { background-color: #a855f7 !important; color: white !important; font-weight: bold; }
+        .day-in-range { background-color: rgba(168, 85, 247, 0.15); border-radius: 0; }
+        .day-range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .day-range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .day-today { border: 1px solid rgba(168, 85, 247, 0.5); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useMemo } = React;
 
         const Icon = ({ name, size = 20, className = "" }) => {
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
@@ -36,8 +40,6 @@
 
         const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/hij5zlohk9jho';
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHNaZVcGKnkCQmijqk2xGoc6Bn3tSNFwFUXUBDYGka0rHGDraOvOzfz3nu4zXOOAfbrhqrkJ9p-q5o/pub?gid=1091499446&single=true&output=csv';
-
-        // --- НАСТРОЙКА ПОЧТЫ ---
         const FORMSPREE_ID = 'xqewzvbe'; 
 
         const parseCSV = (csvText) => {
@@ -58,6 +60,94 @@
             return items;
         };
 
+        const DateRangePicker = ({ startDate, endDate, onChange }) => {
+            const [currentMonth, setCurrentMonth] = useState(new Date());
+            const months = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+
+            const daysInMonth = useMemo(() => {
+                const year = currentMonth.getFullYear();
+                const month = currentMonth.getMonth();
+                const date = new Date(year, month, 1);
+                const days = [];
+                let firstDay = date.getDay() - 1;
+                if (firstDay === -1) firstDay = 6;
+                for (let i = 0; i < firstDay; i++) days.push(null);
+                while (date.getMonth() === month) {
+                    days.push(new Date(date));
+                    date.setDate(date.getDate() + 1);
+                }
+                return days;
+            }, [currentMonth]);
+
+            const handleDateClick = (date) => {
+                if (!date) return;
+                if (!startDate || (startDate && endDate)) {
+                    onChange(date, null);
+                } else if (date < startDate) {
+                    onChange(date, null);
+                } else {
+                    onChange(startDate, date);
+                }
+            };
+
+            const isSelected = (date) => {
+                if (!date) return false;
+                return (startDate && date.toDateString() === startDate.toDateString()) || 
+                       (endDate && date.toDateString() === endDate.toDateString());
+            };
+
+            const isInRange = (date) => {
+                if (!date || !startDate || !endDate) return false;
+                return date > startDate && date < endDate;
+            };
+
+            return (
+                <div className="bg-black/40 border border-white/10 rounded-[2rem] p-6 select-none shadow-2xl">
+                    <div className="flex justify-between items-center mb-6">
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <Icon name="chevron-left" />
+                        </button>
+                        <h4 className="font-black uppercase tracking-widest text-sm text-purple-400">
+                            {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                        </h4>
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <Icon name="chevron-right" />
+                        </button>
+                    </div>
+                    <div className="calendar-grid mb-2">
+                        {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(d => (
+                            <div key={d} className="text-[10px] font-black text-gray-600 text-center py-2 uppercase tracking-tighter">{d}</div>
+                        ))}
+                    </div>
+                    <div className="calendar-grid">
+                        {daysInMonth.map((date, i) => {
+                            const selected = isSelected(date);
+                            const inRange = isInRange(date);
+                            const start = startDate && date && date.toDateString() === startDate.toDateString();
+                            const end = endDate && date && date.toDateString() === endDate.toDateString();
+                            const isToday = date && date.toDateString() === new Date().toDateString();
+
+                            return (
+                                <div 
+                                    key={i} 
+                                    onClick={() => handleDateClick(date)}
+                                    className={`calendar-day ${!date ? 'empty' : ''} 
+                                        ${selected ? 'day-selected' : ''} 
+                                        ${inRange ? 'day-in-range' : ''}
+                                        ${start && endDate ? 'day-range-start' : ''}
+                                        ${end ? 'day-range-end' : ''}
+                                        ${isToday ? 'day-today' : ''}
+                                    `}
+                                >
+                                    {date ? date.getDate() : ""}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
         function App() {
             const [activeTab, setActiveTab] = useState('welcome');
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,14 +156,9 @@
             const [categories, setCategories] = useState([]);
             const [isLoadingData, setIsLoadingData] = useState(true);
             const [formData, setFormData] = useState({ 
-                fullName: '', 
-                city: '', 
-                contacts: '', 
-                concept: '', 
-                dateFrom: '', 
-                dateTo: '', 
-                menuLink: '',
-                comment: '' 
+                fullName: '', city: '', contacts: '', concept: '', 
+                dateFromObj: null, dateToObj: null, 
+                menuLink: '', comment: '' 
             });
             const [dishCounts, setDishCounts] = useState({});
 
@@ -108,7 +193,7 @@
             };
 
             const resetApp = () => {
-                setFormData({ fullName: '', city: '', contacts: '', concept: '', dateFrom: '', dateTo: '', menuLink: '', comment: '' });
+                setFormData({ fullName: '', city: '', contacts: '', concept: '', dateFromObj: null, dateToObj: null, menuLink: '', comment: '' });
                 setDishCounts({});
                 setSelectedItems([]);
                 navigateTo('welcome');
@@ -130,7 +215,6 @@
                             <div className="text-2xl font-black cursor-pointer" onClick={() => navigateTo('welcome')}>
                                 TASTE<span className="text-purple-500">LAB</span>
                             </div>
-                            
                             <div className="hidden md:flex space-x-8 items-center">
                                 <button onClick={() => navigateTo('welcome')} className={activeTab === 'welcome' ? 'text-purple-500 font-bold underline underline-offset-8' : 'text-gray-300 hover:text-white transition-colors'}>О нас</button>
                                 <button onClick={() => navigateTo('portfolio')} className={activeTab === 'portfolio' ? 'text-purple-500 font-bold underline underline-offset-8' : 'text-gray-300 hover:text-white transition-colors'}>Портфолио</button>
@@ -138,19 +222,15 @@
                                     Составить ТЗ {selectedItems.length > 0 && <span className="bg-white text-purple-600 px-2 rounded-full text-xs">{selectedItems.length}</span>}
                                 </button>
                             </div>
-
                             <button className="md:hidden text-gray-300 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                                 <Icon name={mobileMenuOpen ? "x" : "menu"} size={28} />
                             </button>
                         </div>
-
                         {mobileMenuOpen && (
                             <div className="md:hidden bg-[#111] border-b border-white/10 p-6 space-y-4 mobile-menu-enter shadow-2xl">
                                 <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-4 rounded-2xl ${activeTab === 'welcome' ? 'bg-purple-500 text-white font-bold' : 'bg-white/5 text-gray-300'}`}>О нас</button>
                                 <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-4 rounded-2xl ${activeTab === 'portfolio' ? 'bg-purple-500 text-white font-bold' : 'bg-white/5 text-gray-300'}`}>Портфолио</button>
-                                <button onClick={() => navigateTo('brief')} className="block w-full bg-white text-black text-center py-4 rounded-2xl font-black uppercase tracking-widest mt-4">
-                                    Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}
-                                </button>
+                                <button onClick={() => navigateTo('brief')} className="block w-full bg-white text-black text-center py-4 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl">Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}</button>
                             </div>
                         )}
                     </nav>
@@ -158,19 +238,7 @@
                     <main className="pt-20">
                         {activeTab === 'welcome' && <WelcomePage onNext={() => navigateTo('portfolio')} />}
                         {activeTab === 'portfolio' && <PortfolioPage items={portfolioItems} categories={categories} onNext={() => navigateTo('brief')} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />}
-                        {activeTab === 'brief' && (
-                            <BriefPage 
-                                categories={categories} 
-                                selectedItems={selectedItems} 
-                                setSelectedItems={setSelectedItems} 
-                                formData={formData} 
-                                setFormData={setFormData} 
-                                dishCounts={dishCounts} 
-                                setDishCounts={setDishCounts} 
-                                onReset={resetApp} 
-                                onAddMore={() => navigateTo('portfolio')}
-                            />
-                        )}
+                        {activeTab === 'brief' && <BriefPage categories={categories} selectedItems={selectedItems} setSelectedItems={setSelectedItems} formData={formData} setFormData={setFormData} dishCounts={dishCounts} setDishCounts={setDishCounts} onReset={resetApp} onAddMore={() => navigateTo('portfolio')} />}
                     </main>
                 </div>
             );
@@ -178,34 +246,23 @@
 
         const WelcomePage = ({ onNext }) => (
             <div className="max-w-7xl mx-auto px-4 py-12 lg:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-                <div className="space-y-6 lg:space-y-8">
-                    <h1 className="text-5xl lg:text-8xl font-black leading-tight tracking-tighter">
-                        Создаем <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 text-glow">
-                            хитовые меню
-                        </span>
-                    </h1>
-                    <p className="text-lg lg:text-xl text-gray-400 max-w-lg font-medium leading-relaxed">Разрабатываем прорывные гастрономические решения для вашего бизнеса. От концепции до запуска.</p>
-                    <button onClick={onNext} className="bg-white text-black px-12 py-5 rounded-full font-black uppercase tracking-widest flex items-center gap-3 hover:bg-gray-200 transition-all active:scale-95 shadow-2xl shadow-white/10">
-                        Смотреть работы <Icon name="chevron-right" />
-                    </button>
-                    <div className="pt-8 lg:pt-12 grid grid-cols-3 gap-4 lg:gap-8 border-t border-white/10">
-                        <div className="group cursor-default">
-                            <div className="text-2xl lg:text-4xl font-black text-purple-500 group-hover:scale-110 transition-transform origin-left">100+</div>
-                            <div className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest mt-1">Проектов</div>
-                        </div>
-                        <div className="group cursor-default">
-                            <div className="text-2xl lg:text-4xl font-black text-purple-500 group-hover:scale-110 transition-transform origin-left">6</div>
-                            <div className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest mt-1">Кухонь</div>
-                        </div>
-                        <div className="group cursor-default">
-                            <div className="text-2xl lg:text-4xl font-black text-purple-500 group-hover:scale-110 transition-transform origin-left">14</div>
-                            <div className="text-[10px] lg:text-xs text-gray-500 uppercase font-black tracking-widest mt-1">Дней</div>
-                        </div>
+                <div className="space-y-6 lg:space-y-8 text-center lg:text-left">
+                    <h1 className="text-5xl lg:text-8xl font-black leading-tight tracking-tighter">Создаем <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 text-glow">хитовые меню</span></h1>
+                    <p className="text-lg lg:text-xl text-gray-400 max-w-lg mx-auto lg:mx-0 font-medium leading-relaxed">Разрабатываем прорывные гастрономические решения для вашего бизнеса. От концепции до запуска.</p>
+                    <button onClick={onNext} className="bg-white text-black px-12 py-5 rounded-full font-black uppercase tracking-widest flex items-center gap-3 hover:bg-gray-200 transition-all mx-auto lg:mx-0 active:scale-95 shadow-2xl">Смотреть работы <Icon name="chevron-right" /></button>
+                    <div className="pt-8 lg:pt-12 grid grid-cols-3 gap-4 border-t border-white/10">
+                        <div><div className="text-2xl lg:text-4xl font-black text-purple-500">100+</div><div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">Проектов</div></div>
+                        <div><div className="text-2xl lg:text-4xl font-black text-purple-500">6</div><div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">Кухонь</div></div>
+                        <div><div className="text-2xl lg:text-4xl font-black text-purple-500">14</div><div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-1">Дней</div></div>
                     </div>
                 </div>
-                <div className="rounded-[2.5rem] overflow-hidden aspect-[4/5] relative border border-white/10 shadow-2xl mt-8 lg:mt-0">
-                    <img src="https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&q=80&w=1000" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 scale-105 hover:scale-100" />
+                <div className="rounded-[2.5rem] overflow-hidden aspect-[4/5] relative border border-white/10 shadow-2xl hidden lg:block">
+                    {/* Используем качественное изображение шефа с Unsplash, так как blob не работает */}
+                    <img 
+                        src="https://images.unsplash.com/photo-1577214190418-6395995e8083?auto=format&fit=crop&q=80&w=1000" 
+                        alt="Шеф-повар"
+                        className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                 </div>
             </div>
@@ -219,7 +276,7 @@
             return (
                 <div className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
                     <div className="text-center mb-10">
-                        <h2 className="text-4xl lg:text-5xl font-black mb-6 uppercase tracking-tighter text-center">Наши <span className="text-purple-500">работы</span></h2>
+                        <h2 className="text-4xl lg:text-5xl font-black mb-6 uppercase tracking-tighter">Наши <span className="text-purple-500">работы</span></h2>
                         <div className="flex flex-wrap justify-center gap-2 mt-8">
                             {['Все', ...categories].map(c => (
                                 <button key={c} onClick={() => setCat(c)} className={`px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all ${cat === c ? 'bg-white text-black scale-105 shadow-xl' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{c}</button>
@@ -246,9 +303,9 @@
                             );
                         })}
                     </div>
-                    <div className="mt-20 text-center p-12 lg:p-20 bg-gradient-to-br from-purple-900/10 to-transparent rounded-[3rem] border border-white/10">
-                        <h3 className="text-2xl lg:text-4xl font-black mb-8 uppercase tracking-tight">Готовы обсудить <br className="sm:hidden"/> ваш проект?</h3>
-                        <button onClick={onNext} className="bg-purple-600 px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-purple-500 transition-all active:scale-95 shadow-2xl shadow-purple-900/40">Составить ТЗ</button>
+                    <div className="mt-20 text-center p-12 bg-[#111] rounded-[3rem] border border-white/10 shadow-2xl">
+                        <h3 className="text-2xl lg:text-4xl font-black mb-8 uppercase tracking-tight">Готовы к работе?</h3>
+                        <button onClick={onNext} className="bg-purple-600 px-12 py-5 rounded-full font-black uppercase tracking-widest hover:bg-purple-500 active:scale-95 shadow-2xl shadow-purple-900/40">Составить ТЗ</button>
                     </div>
                 </div>
             );
@@ -260,6 +317,10 @@
             const [warn, setWarn] = useState(false);
 
             const send = async () => {
+                if (!formData.dateFromObj || !formData.dateToObj) {
+                    alert('Пожалуйста, выберите сроки на календаре!');
+                    return;
+                }
                 setSending(true);
                 const itemsStr = Object.entries(dishCounts).filter(([_,v]) => v > 0).map(([c, v]) => `${c}: ${v}`).join(', ');
                 const refsStr = selectedItems.map(i => i.title).join(', ');
@@ -270,8 +331,8 @@
                     "Город": formData.city,
                     "Контакты": formData.contacts,
                     "Концепция": formData.concept,
-                    "Сроки (от)": formData.dateFrom,
-                    "Сроки (до)": formData.dateTo,
+                    "Сроки (от)": formData.dateFromObj.toLocaleDateString('ru-RU'),
+                    "Сроки (до)": formData.dateToObj.toLocaleDateString('ru-RU'),
                     "Ссылка на материалы": formData.menuLink,
                     "Комментарий": formData.comment || '-',
                     "Выбранные блюда": `Нужно: ${itemsStr || 'не указано'} | Референсы: ${refsStr || 'нет'}`
@@ -283,167 +344,135 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ data: finalData })
                     });
-                    if (FORMSPREE_ID) {
-                        fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
-                            method: 'POST',
-                            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ subject: `Новое ТЗ: ${formData.fullName} (${formData.city})`, ...finalData })
-                        });
-                    }
-                    await sheetPromise;
+                    const emailPromise = fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ subject: `Новое ТЗ: ${formData.fullName}`, ...finalData })
+                    });
+                    await Promise.all([sheetPromise, emailPromise]);
                     setSubmitted(true);
-                } catch (e) { 
-                    alert('Ошибка при отправке в таблицу. Проверьте соединение.'); 
-                } finally { 
-                    setSending(false); 
-                }
+                } catch (e) { alert('Ошибка при отправке.'); } 
+                finally { setSending(false); }
             };
 
             if (submitted) return (
                 <div className="py-32 lg:py-48 text-center max-w-xl mx-auto px-4">
-                    <div className="w-28 h-28 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-10 animate-bounce">
-                        <Icon name="check-circle" size={56} className="text-purple-500" />
-                    </div>
+                    <div className="w-28 h-28 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-10 animate-bounce shadow-2xl shadow-purple-500/10"><Icon name="check-circle" size={56} className="text-purple-500" /></div>
                     <h2 className="text-5xl font-black mb-6 uppercase tracking-tighter">Готово!</h2>
-                    <p className="text-gray-400 mb-6 text-xl leading-relaxed text-center">ТЗ улетело в таблицу. Если это ваша первая отправка — не забудьте подтвердить форму в письме от Formspree!</p>
-                    <button onClick={onReset} className="text-purple-400 font-black uppercase tracking-[0.2em] hover:text-white transition-colors border-b-2 border-purple-500/30 pb-1">Вернуться на главную</button>
+                    <p className="text-gray-400 mb-12 text-xl">ТЗ улетело. Мы скоро свяжемся!</p>
+                    <button onClick={onReset} className="text-purple-400 font-black uppercase tracking-[0.2em] hover:text-white border-b-2 border-purple-500/30 pb-1 transition-all">На главную</button>
                 </div>
             );
 
             return (
-                <div className="max-w-4xl mx-auto px-4 py-12 space-y-12">
+                <div className="max-w-4xl mx-auto px-4 py-12 space-y-12 pb-24">
                     <h2 className="text-4xl lg:text-6xl font-black mb-12 uppercase tracking-tighter text-glow text-center">Заполнение <span className="text-purple-500">ТЗ</span></h2>
-                    
                     <form onSubmit={(e) => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-12">
                         
-                        {/* Контакты */}
-                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-8 shadow-2xl relative overflow-hidden">
-                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                                <Icon name="user" size={16}/> Контактная информация
-                            </h3>
+                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-8 shadow-2xl">
+                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3"><Icon name="user" size={16}/> Контакты</h3>
                             <div className="grid md:grid-cols-2 gap-6 relative z-10">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 uppercase font-black ml-1">Как вас зовут *</label>
-                                    <input required placeholder="ФИО" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                                    <label className="text-[10px] text-gray-500 uppercase font-black ml-1 tracking-widest">Имя *</label>
+                                    <input required placeholder="ФИО" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 shadow-inner" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 uppercase font-black ml-1">Ваш город *</label>
-                                    <input required placeholder="Город" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                                    <label className="text-[10px] text-gray-500 uppercase font-black ml-1 tracking-widest">Город *</label>
+                                    <input required placeholder="Город" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 shadow-inner" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
                                 </div>
                             </div>
-                            <div className="space-y-2 relative z-10">
-                                <label className="text-[10px] text-gray-500 uppercase font-black ml-1">Где вам удобнее ответить *</label>
-                                <input required placeholder="Телефон, Телеграм или Почта" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700" value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} />
+                            <div className="space-y-2">
+                                <label className="text-[10px] text-gray-500 uppercase font-black ml-1 tracking-widest">Связь *</label>
+                                <input required placeholder="Телефон / Почта" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 shadow-inner" value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} />
                             </div>
                         </div>
 
-                        {/* Проект */}
                         <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-8 shadow-2xl">
-                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                                <Icon name="utensils" size={16}/> О вашем проекте
-                            </h3>
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-gray-500 uppercase font-black ml-1">Суть концепции</label>
-                                <textarea placeholder="Расскажите о кухне, атмосфере и идеях..." className="w-full bg-black border border-white/10 p-5 rounded-[1.5rem] h-40 outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 resize-none" value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-8">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest ml-1">Желаемый старт *</label>
-                                    <input required type="date" className="w-full bg-black border border-white/10 p-4 rounded-2xl focus:border-purple-500 transition-all [color-scheme:dark]" value={formData.dateFrom} onChange={e => setFormData({...formData, dateFrom: e.target.value})} />
+                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3"><Icon name="calendar" size={16}/> Сроки реализации</h3>
+                            <div className="grid md:grid-cols-2 gap-8 items-start">
+                                <div className="space-y-4">
+                                    <p className="text-sm text-gray-400 leading-relaxed font-medium">Выберите на календаре период, в который планируете провести разработку и запуск проекта.</p>
+                                    <div className="bg-black/50 border border-white/5 rounded-2xl p-5 space-y-3 shadow-inner">
+                                        <div className="flex justify-between text-xs uppercase font-black">
+                                            <span className="text-gray-600">Начало:</span>
+                                            <span className={formData.dateFromObj ? 'text-purple-400' : 'text-gray-800'}>{formData.dateFromObj ? formData.dateFromObj.toLocaleDateString('ru-RU') : 'не выбрано'}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs uppercase font-black border-t border-white/5 pt-3">
+                                            <span className="text-gray-600">Завершение:</span>
+                                            <span className={formData.dateToObj ? 'text-purple-400' : 'text-gray-800'}>{formData.dateToObj ? formData.dateToObj.toLocaleDateString('ru-RU') : 'не выбрано'}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 uppercase font-black tracking-widest ml-1">Дедлайн *</label>
-                                    <input required type="date" className="w-full bg-black border border-white/10 p-4 rounded-2xl focus:border-purple-500 transition-all [color-scheme:dark]" value={formData.dateTo} onChange={e => setFormData({...formData, dateTo: e.target.value})} />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-gray-500 uppercase font-black ml-1">Материалы (ссылка)</label>
-                                <input placeholder="Мудборд, дизайн или текущее меню" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700" value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} />
+                                <DateRangePicker 
+                                    startDate={formData.dateFromObj} 
+                                    endDate={formData.dateToObj} 
+                                    onChange={(start, end) => setFormData({...formData, dateFromObj: start, dateToObj: end})}
+                                />
                             </div>
                         </div>
 
-                        {/* Блюда */}
+                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-8 shadow-2xl">
+                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3"><Icon name="utensils" size={16}/> Концепция</h3>
+                            <textarea placeholder="Опишите ваши идеи, направление кухни и атмосферу..." className="w-full bg-black border border-white/10 p-5 rounded-[1.5rem] h-40 outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 resize-none shadow-inner" value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
+                            <input placeholder="Ссылка на материалы (Google Диск / Pinterest / Облако)" className="w-full bg-black border border-white/10 p-4 rounded-2xl outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 shadow-inner" value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} />
+                        </div>
+
                         <div className="space-y-6">
-                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] ml-4">Объем разработки (шт.)</h3>
+                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] ml-4 text-center lg:text-left">Объем разработки (шт.)</h3>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 {categories.map(c => (
-                                    <div key={c} className="bg-[#111] p-5 rounded-3xl border border-white/5 flex flex-col gap-4 group hover:border-purple-500/30 transition-colors">
-                                        <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-purple-400 transition-colors">{c}</span>
-                                        <div className="flex items-center justify-between bg-black p-2 rounded-2xl border border-white/5">
+                                    <div key={c} className="bg-[#111] p-5 rounded-3xl border border-white/5 flex flex-col gap-4 group hover:border-purple-500/30 transition-all shadow-lg hover:shadow-purple-500/5">
+                                        <span className="text-[10px] font-black uppercase text-gray-500 group-hover:text-purple-400 transition-colors tracking-widest">{c}</span>
+                                        <div className="flex items-center justify-between bg-black p-2 rounded-2xl border border-white/5 shadow-inner">
                                             <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Icon name="minus" size={16} /></button>
-                                            <span className="font-black text-lg">{dishCounts[c]||0}</span>
-                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-colors"><Icon name="plus" size={16} /></button>
+                                            <span className="font-black text-lg text-white">{dishCounts[c]||0}</span>
+                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-10 h-10 rounded-xl bg-purple-600 hover:bg-purple-500 flex items-center justify-center transition-colors shadow-lg"><Icon name="plus" size={16} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Референсы */}
-                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 relative">
+                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 shadow-2xl">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
                                 <h3 className="text-xs font-black uppercase tracking-[0.3em] text-purple-400">Референсы ({selectedItems.length})</h3>
-                                <button 
-                                    type="button" 
-                                    onClick={onAddMore} 
-                                    className="bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-200 transition-all active:scale-95 shadow-xl shadow-purple-900/10"
-                                >
-                                    <Icon name="plus" size={14} className="text-purple-600"/> Добавить из портфолио
-                                </button>
+                                <button type="button" onClick={onAddMore} className="bg-white text-black px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-gray-200 transition-all active:scale-95 shadow-xl"><Icon name="plus" size={14} className="text-purple-600"/> Добавить еще</button>
                             </div>
-                            
                             {selectedItems.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     {selectedItems.map(item => (
-                                        <div key={item.id} className="bg-black border border-white/5 rounded-3xl p-4 flex items-center gap-5 group hover:border-purple-500/40 transition-all shadow-xl">
-                                            <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=200'} className="w-20 h-20 rounded-2xl object-cover" />
+                                        <div key={item.id} className="bg-black border border-white/5 rounded-3xl p-4 flex items-center gap-5 group shadow-xl hover:border-purple-500/20 transition-all">
+                                            <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=200'} className="w-20 h-20 rounded-2xl object-cover shadow-lg" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[10px] text-purple-500 font-black uppercase tracking-widest mb-1">{item.category}</p>
-                                                <p className="text-lg font-black truncate text-white leading-none">{item.title}</p>
+                                                <p className="text-lg font-black truncate text-white leading-none uppercase">{item.title}</p>
                                             </div>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))}
-                                                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-600 hover:bg-red-500 hover:text-white transition-all"
-                                            >
-                                                <Icon name="x" size={20} />
-                                            </button>
+                                            <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="w-10 h-10 rounded-full flex items-center justify-center text-gray-700 hover:bg-red-500 hover:text-white transition-all"><Icon name="x" size={20} /></button>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-[2rem] bg-black/40">
-                                    <Icon name="camera" size={40} className="mx-auto text-gray-700 mb-4 opacity-20" />
-                                    <p className="text-gray-500 text-sm max-w-[240px] mx-auto font-medium text-center">Выберите визуальные примеры в портфолио, чтобы мы понимали ваши вкусы</p>
-                                </div>
+                                <div className="text-center py-16 border-2 border-dashed border-white/5 rounded-[2rem] bg-black/40"><p className="text-gray-600 text-sm max-w-[240px] mx-auto font-medium text-center uppercase tracking-widest">Выберите визуальные примеры в портфолио</p></div>
                             )}
                         </div>
 
-                        {/* Комментарий */}
                         <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-4 shadow-2xl">
-                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                                <Icon name="message-square" size={16}/> Дополнительный комментарий
-                            </h3>
-                            <textarea 
-                                placeholder="Любые мысли, пожелания или важные уточнения..." 
-                                className="w-full bg-black border border-white/10 p-5 rounded-[1.5rem] h-32 outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 resize-none" 
-                                value={formData.comment} 
-                                onChange={e => setFormData({...formData, comment: e.target.value})} 
-                            />
+                            <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3"><Icon name="message-square" size={16}/> Комментарий</h3>
+                            <textarea placeholder="Любые мысли, пожелания или важные уточнения..." className="w-full bg-black border border-white/10 p-5 rounded-[1.5rem] h-32 outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 resize-none shadow-inner" value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} />
                         </div>
 
                         {warn ? (
-                            <div className="bg-yellow-500/10 p-8 rounded-[2.5rem] border border-yellow-500/30 text-center animate-pulse">
-                                <p className="text-yellow-400 font-black mb-8 uppercase tracking-widest">Концепция не описана! Точно отправляем?</p>
+                            <div className="bg-yellow-500/10 p-10 rounded-[2.5rem] border border-yellow-500/30 text-center animate-pulse">
+                                <p className="text-yellow-400 font-black mb-8 uppercase tracking-[0.2em] text-sm">Концепция не описана! <br className="sm:hidden"/> Точно отправляем?</p>
                                 <div className="flex gap-4 max-w-sm mx-auto">
-                                    <button type="button" onClick={() => setWarn(false)} className="flex-1 bg-white/5 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10">Дописать</button>
-                                    <button type="button" onClick={send} className="flex-1 bg-yellow-500 text-black px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl">Да, отправляй</button>
+                                    <button type="button" onClick={() => setWarn(false)} className="flex-1 bg-white/5 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-colors">Дописать</button>
+                                    <button type="button" onClick={send} className="flex-1 bg-yellow-500 text-black px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl transition-transform active:scale-95">Отправить</button>
                                 </div>
                             </div>
                         ) : (
-                            <button type="submit" disabled={sending} className="group relative w-full bg-white text-black py-5 rounded-[1.8rem] font-black text-xl uppercase tracking-[0.3em] hover:bg-purple-500 hover:text-white active:scale-[0.98] disabled:bg-gray-900 disabled:text-gray-700 transition-all shadow-2xl overflow-hidden">
-                                <div className="relative z-10">{sending ? 'Отправка...' : 'Отправить ТЗ'}</div>
-                                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <button type="submit" disabled={sending} className="group relative w-full bg-white text-black py-7 rounded-[2rem] font-black text-2xl uppercase tracking-[0.3em] hover:bg-purple-600 hover:text-white active:scale-[0.98] disabled:bg-gray-900 disabled:text-gray-800 transition-all shadow-[0_20px_50px_rgba(168,85,247,0.15)] overflow-hidden">
+                                <div className="relative z-10 uppercase tracking-[0.2em]">{sending ? 'Отправка...' : 'Отправить ТЗ'}</div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             </button>
                         )}
                     </form>
