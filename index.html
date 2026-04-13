@@ -13,9 +13,14 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: white; }
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: white; margin: 0; }
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         [color-scheme="dark"]::-webkit-calendar-picker-indicator { filter: invert(1); }
+        .mobile-menu-enter { animation: slideDown 0.3s ease-out forwards; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -24,7 +29,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Иконки (используем SVG напрямую для надежности в HTML-файле)
         const Icon = ({ name, size = 20, className = "" }) => {
             return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
         };
@@ -94,14 +98,6 @@
                                 setCategories([...new Set(parsedItems.map(item => item.category))]);
                             }
                         }
-                        if (ABOUT_CSV_URL) {
-                            const resAbout = await fetch(ABOUT_CSV_URL);
-                            if (resAbout.ok) {
-                                const aboutText = await resAbout.text();
-                                const parsedAbout = parseAboutCSV(aboutText);
-                                if (parsedAbout) setAboutData(parsedAbout);
-                            }
-                        }
                     } catch (e) { console.error(e); }
                     finally { 
                         setIsLoadingData(false);
@@ -111,7 +107,7 @@
                 fetchData();
             }, []);
 
-            useEffect(() => { lucide.createIcons(); }, [activeTab, isLoadingData]);
+            useEffect(() => { lucide.createIcons(); }, [activeTab, isLoadingData, mobileMenuOpen]);
 
             const navigateTo = (tab) => {
                 setActiveTab(tab);
@@ -137,22 +133,37 @@
 
             return (
                 <div className="min-h-screen bg-[#0a0a0a]">
-                    <nav className="fixed w-full z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10">
+                    <nav className="fixed w-full z-50 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/10">
                         <div className="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
                             <div className="text-2xl font-black cursor-pointer" onClick={() => navigateTo('welcome')}>
                                 TASTE<span className="text-purple-500">LAB</span>
                             </div>
+                            
+                            {/* Desktop Menu */}
                             <div className="hidden md:flex space-x-8 items-center">
-                                <button onClick={() => navigateTo('welcome')} className={activeTab === 'welcome' ? 'text-purple-500' : 'text-gray-300 hover:text-white'}>О нас</button>
-                                <button onClick={() => navigateTo('portfolio')} className={activeTab === 'portfolio' ? 'text-purple-500' : 'text-gray-300 hover:text-white'}>Портфолио</button>
-                                <button onClick={() => navigateTo('brief')} className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full font-bold flex items-center gap-2">
+                                <button onClick={() => navigateTo('welcome')} className={activeTab === 'welcome' ? 'text-purple-500 font-bold' : 'text-gray-300 hover:text-white'}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={activeTab === 'portfolio' ? 'text-purple-500 font-bold' : 'text-gray-300 hover:text-white'}>Портфолио</button>
+                                <button onClick={() => navigateTo('brief')} className="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all">
                                     ТЗ {selectedItems.length > 0 && <span className="bg-white text-purple-600 px-2 rounded-full text-xs">{selectedItems.length}</span>}
                                 </button>
                             </div>
-                            <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                                <Icon name={mobileMenuOpen ? "x" : "menu"} />
+
+                            {/* Mobile Toggle */}
+                            <button className="md:hidden text-gray-300" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                <Icon name={mobileMenuOpen ? "x" : "menu"} size={28} />
                             </button>
                         </div>
+
+                        {/* Mobile Menu Content */}
+                        {mobileMenuOpen && (
+                            <div className="md:hidden bg-[#111] border-b border-white/10 p-4 space-y-4 mobile-menu-enter">
+                                <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-3 rounded-xl ${activeTab === 'welcome' ? 'bg-purple-500/10 text-purple-500 font-bold' : 'text-gray-300'}`}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-3 rounded-xl ${activeTab === 'portfolio' ? 'bg-purple-500/10 text-purple-500 font-bold' : 'text-gray-300'}`}>Портфолио</button>
+                                <button onClick={() => navigateTo('brief')} className="block w-full bg-purple-600 text-white text-center py-4 rounded-xl font-bold mt-2 shadow-lg active:scale-95 transition-transform">
+                                    Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}
+                                </button>
+                            </div>
+                        )}
                     </nav>
 
                     <main className="pt-20">
@@ -165,25 +176,25 @@
         }
 
         const WelcomePage = ({ onNext, data }) => (
-            <div className="max-w-7xl mx-auto px-4 py-20 lg:py-32 grid lg:grid-cols-2 gap-16 items-center">
-                <div className="space-y-8">
-                    <h1 className="text-5xl lg:text-7xl font-black leading-tight">
+            <div className="max-w-7xl mx-auto px-4 py-12 lg:py-32 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <div className="space-y-6 lg:space-y-8">
+                    <h1 className="text-4xl lg:text-7xl font-black leading-tight">
                         {data.title1 || 'Создаем'} <br/>
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
                             {data.title2 || 'хитовые меню'}
                         </span>
                     </h1>
-                    <p className="text-xl text-gray-400 max-w-lg">{data.description || 'Разрабатываем прорывные гастрономические решения для вашего бизнеса.'}</p>
-                    <button onClick={onNext} className="bg-white text-black px-10 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-gray-200 transition-all">
+                    <p className="text-lg lg:text-xl text-gray-400 max-w-lg">{data.description || 'Разрабатываем прорывные гастрономические решения для вашего бизнеса.'}</p>
+                    <button onClick={onNext} className="bg-white text-black px-10 py-4 rounded-full font-bold flex items-center gap-2 hover:bg-gray-200 transition-all active:scale-95">
                         {data.buttonText || 'Смотреть работы'} <Icon name="chevron-right" />
                     </button>
-                    <div className="pt-12 grid grid-cols-3 gap-8 border-t border-white/10">
-                        <div><div className="text-3xl font-black text-purple-500">{data.stat1Num || '100+'}</div><div className="text-xs text-gray-500 uppercase">{data.stat1Text || 'Проектов'}</div></div>
-                        <div><div className="text-3xl font-black text-purple-500">{data.stat2Num || '6'}</div><div className="text-xs text-gray-500 uppercase">{data.stat2Text || 'Кухонь'}</div></div>
-                        <div><div className="text-3xl font-black text-purple-500">{data.stat3Num || '14'}</div><div className="text-xs text-gray-500 uppercase">{data.stat3Text || 'Дней'}</div></div>
+                    <div className="pt-8 lg:pt-12 grid grid-cols-3 gap-4 lg:gap-8 border-t border-white/10">
+                        <div><div className="text-2xl lg:text-3xl font-black text-purple-500">{data.stat1Num || '100+'}</div><div className="text-[10px] lg:text-xs text-gray-500 uppercase font-bold">{data.stat1Text || 'Проектов'}</div></div>
+                        <div><div className="text-2xl lg:text-3xl font-black text-purple-500">{data.stat2Num || '6'}</div><div className="text-[10px] lg:text-xs text-gray-500 uppercase font-bold">{data.stat2Text || 'Кухонь'}</div></div>
+                        <div><div className="text-2xl lg:text-3xl font-black text-purple-500">{data.stat3Num || '14'}</div><div className="text-[10px] lg:text-xs text-gray-500 uppercase font-bold">{data.stat3Text || 'Дней'}</div></div>
                     </div>
                 </div>
-                <div className="rounded-3xl overflow-hidden aspect-[4/5] relative border border-white/10 shadow-2xl">
+                <div className="rounded-3xl overflow-hidden aspect-[4/5] relative border border-white/10 shadow-2xl mt-8 lg:mt-0">
                     <img src={data.image || 'https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&q=80&w=1000'} className="w-full h-full object-cover" />
                 </div>
             </div>
@@ -195,32 +206,38 @@
             const toggle = (i) => setSelectedItems(prev => prev.find(x => x.id === i.id) ? prev.filter(x => x.id !== i.id) : [...prev, i]);
 
             return (
-                <div className="max-w-7xl mx-auto px-4 py-16">
-                    <div className="text-center mb-12">
-                        <h2 className="text-4xl font-black mb-4">Наши <span className="text-purple-500">работы</span></h2>
-                        <div className="flex flex-wrap justify-center gap-2 mt-8">
+                <div className="max-w-7xl mx-auto px-4 py-12 lg:py-16">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl lg:text-4xl font-black mb-6 uppercase tracking-tight">Наши <span className="text-purple-500">работы</span></h2>
+                        <div className="flex flex-wrap justify-center gap-2 mt-6">
                             {['Все', ...categories].map(c => (
-                                <button key={c} onClick={() => setCat(c)} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${cat === c ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{c}</button>
+                                <button key={c} onClick={() => setCat(c)} className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${cat === c ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{c}</button>
                             ))}
                         </div>
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filtered.map(i => (
-                            <div key={i.id} className="group relative aspect-square rounded-3xl overflow-hidden border border-white/10">
-                                <img src={i.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=800'} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent flex flex-col justify-end p-6">
-                                    <h3 className="font-bold text-xl">{i.title}</h3>
-                                    <p className="text-sm text-gray-400 line-clamp-2 mt-1">{i.description}</p>
-                                    <button onClick={() => toggle(i)} className={`mt-4 w-10 h-10 rounded-full flex items-center justify-center transition-all ${selectedItems.find(x => x.id === i.id) ? 'bg-purple-500' : 'bg-white/20 hover:bg-purple-500'}`}>
-                                        <Icon name={selectedItems.find(x => x.id === i.id) ? 'check' : 'plus'} />
-                                    </button>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filtered.map(i => {
+                            const active = selectedItems.find(x => x.id === i.id);
+                            return (
+                                <div key={i.id} className={`group relative aspect-square rounded-3xl overflow-hidden border transition-all duration-300 ${active ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-white/10'}`}>
+                                    <img src={i.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=800'} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-all duration-500" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent flex flex-col justify-end p-6">
+                                        <div className="translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                            <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-1 block">{i.category}</span>
+                                            <h3 className="font-black text-lg lg:text-xl uppercase">{i.title}</h3>
+                                            <p className="text-xs text-gray-400 line-clamp-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">{i.description}</p>
+                                        </div>
+                                        <button onClick={() => toggle(i)} className={`mt-4 w-12 h-12 rounded-full flex items-center justify-center transition-all active:scale-90 ${active ? 'bg-purple-500 shadow-lg' : 'bg-white/10 hover:bg-purple-500 shadow-xl'}`}>
+                                            <Icon name={active ? 'check' : 'plus'} size={24} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
-                    <div className="mt-20 text-center p-12 bg-white/5 rounded-3xl border border-white/10">
-                        <h3 className="text-2xl font-bold mb-4">Готовы собрать свое ТЗ?</h3>
-                        <button onClick={onNext} className="bg-purple-600 px-10 py-4 rounded-full font-bold">Перейти к анкете</button>
+                    <div className="mt-16 text-center p-8 lg:p-12 bg-white/5 rounded-3xl border border-white/10">
+                        <h3 className="text-xl lg:text-2xl font-bold mb-6">Готовы собрать свое ТЗ?</h3>
+                        <button onClick={onNext} className="bg-purple-600 px-10 py-4 rounded-full font-black uppercase tracking-wider hover:bg-purple-500 transition-all active:scale-95 shadow-xl">Перейти к анкете</button>
                     </div>
                 </div>
             );
@@ -233,7 +250,7 @@
 
             const send = async () => {
                 setSending(true);
-                const itemsStr = Object.entries(dishCounts).map(([c, v]) => `${c}: ${v}`).join(', ');
+                const itemsStr = Object.entries(dishCounts).filter(([_,v]) => v > 0).map(([c, v]) => `${c}: ${v}`).join(', ');
                 const refsStr = selectedItems.map(i => i.title).join(', ');
                 
                 try {
@@ -249,7 +266,7 @@
                             "Сроки (от)": formData.dateFrom,
                             "Сроки (до)": formData.dateTo,
                             "Ссылка на материалы": formData.menuLink,
-                            "Выбранные блюда": `Нужно: ${itemsStr} | Референсы: ${refsStr}`
+                            "Выбранные блюда": `Нужно: ${itemsStr || 'не указано'} | Референсы: ${refsStr || 'нет'}`
                         }})
                     });
                     if (res.ok) setSubmitted(true);
@@ -258,68 +275,72 @@
             };
 
             if (submitted) return (
-                <div className="py-40 text-center max-w-xl mx-auto px-4">
-                    <Icon name="check-circle" size={80} className="mx-auto text-purple-500 mb-8" />
-                    <h2 className="text-4xl font-black mb-4">Успешно!</h2>
-                    <p className="text-gray-400 mb-10">ТЗ уже в таблице, скоро свяжемся.</p>
-                    <button onClick={onReset} className="text-purple-400 font-bold uppercase tracking-widest hover:text-white">На главную</button>
+                <div className="py-32 lg:py-48 text-center max-w-xl mx-auto px-4">
+                    <div className="w-24 h-24 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-8">
+                        <Icon name="check-circle" size={48} className="text-purple-500" />
+                    </div>
+                    <h2 className="text-4xl font-black mb-4 uppercase tracking-tight">Успешно!</h2>
+                    <p className="text-gray-400 mb-10 text-lg">ТЗ уже в таблице, скоро свяжемся для обсуждения деталей.</p>
+                    <button onClick={onReset} className="text-purple-400 font-black uppercase tracking-widest hover:text-white transition-colors">На главную</button>
                 </div>
             );
 
             return (
-                <div className="max-w-4xl mx-auto px-4 py-16 space-y-10">
-                    <h2 className="text-4xl font-black mb-8">Заполнение <span className="text-purple-500">ТЗ</span></h2>
+                <div className="max-w-4xl mx-auto px-4 py-12 space-y-10">
+                    <h2 className="text-3xl lg:text-4xl font-black mb-8 uppercase tracking-tighter">Заполнение <span className="text-purple-500">ТЗ</span></h2>
                     <form onSubmit={(e) => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-8">
-                        <div className="bg-white/5 p-8 rounded-3xl border border-white/10 space-y-6">
+                        <div className="bg-white/5 p-6 lg:p-8 rounded-3xl border border-white/10 space-y-6">
+                            <h3 className="text-sm font-black text-purple-400 uppercase tracking-widest">Контакты</h3>
                             <div className="grid md:grid-cols-2 gap-6">
-                                <input required placeholder="ФИО *" className="bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
-                                <input required placeholder="Город *" className="bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                                <input required placeholder="ФИО *" className="bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500 transition-all" value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
+                                <input required placeholder="Город *" className="bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500 transition-all" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
                             </div>
-                            <input required placeholder="Контакты (Телефон / Почта) *" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500" value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} />
+                            <input required placeholder="Телефон / Почта *" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500 transition-all" value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} />
                         </div>
-                        <div className="bg-white/5 p-8 rounded-3xl border border-white/10 space-y-6">
-                            <textarea placeholder="Опишите концепцию..." className="w-full bg-black/40 border border-white/10 p-4 rounded-xl h-32 outline-none focus:border-purple-500" value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
+                        <div className="bg-white/5 p-6 lg:p-8 rounded-3xl border border-white/10 space-y-6">
+                            <h3 className="text-sm font-black text-purple-400 uppercase tracking-widest">Проект</h3>
+                            <textarea placeholder="Опишите концепцию..." className="w-full bg-black/40 border border-white/10 p-4 rounded-xl h-32 outline-none focus:border-purple-500 transition-all" value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
                             <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-2"><label className="text-xs text-gray-500 uppercase">Сроки (с)</label><input required type="date" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl" value={formData.dateFrom} onChange={e => setFormData({...formData, dateFrom: e.target.value})} /></div>
-                                <div className="space-y-2"><label className="text-xs text-gray-500 uppercase">Сроки (по)</label><input required type="date" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl" value={formData.dateTo} onChange={e => setFormData({...formData, dateTo: e.target.value})} /></div>
+                                <div className="space-y-2"><label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest ml-1">Сроки (с)</label><input required type="date" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl" value={formData.dateFrom} onChange={e => setFormData({...formData, dateFrom: e.target.value})} /></div>
+                                <div className="space-y-2"><label className="text-[10px] text-gray-500 uppercase font-bold tracking-widest ml-1">Сроки (по)</label><input required type="date" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl" value={formData.dateTo} onChange={e => setFormData({...formData, dateTo: e.target.value})} /></div>
                             </div>
+                            <input placeholder="Ссылка на текущее меню или облако" className="w-full bg-black/40 border border-white/10 p-4 rounded-xl outline-none focus:border-purple-500 transition-all" value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} />
                         </div>
                         {categories.length > 0 && (
-                            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                                 {categories.map(c => (
-                                    <div key={c} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex justify-between items-center">
-                                        <span className="text-sm font-bold">{c}</span>
-                                        <div className="flex items-center gap-3">
-                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center"><Icon name="minus" size={14} /></button>
-                                            <span className="w-4 text-center">{dishCounts[c]||0}</span>
+                                    <div key={c} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex flex-col gap-3">
+                                        <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">{c}</span>
+                                        <div className="flex items-center justify-between bg-black/20 p-2 rounded-xl">
+                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center"><Icon name="minus" size={14} /></button>
+                                            <span className="font-bold">{dishCounts[c]||0}</span>
                                             <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-8 h-8 rounded-lg bg-purple-600 hover:bg-purple-500 flex items-center justify-center"><Icon name="plus" size={14} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <div className="bg-purple-500/10 p-8 rounded-3xl border border-purple-500/30">
-                            <h3 className="font-bold mb-4">Выбранные референсы ({selectedItems.length})</h3>
+                        <div className="bg-purple-500/10 p-6 lg:p-8 rounded-3xl border border-purple-500/30">
+                            <h3 className="font-black mb-4 uppercase text-xs tracking-widest text-purple-400">Референсы ({selectedItems.length})</h3>
                             <div className="flex flex-wrap gap-2">
                                 {selectedItems.map(i => (
-                                    <div key={i.id} className="bg-purple-500 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2">
+                                    <div key={i.id} className="bg-purple-600 text-[10px] font-black px-4 py-2 rounded-full flex items-center gap-2 shadow-lg">
                                         {i.title} <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== i.id))}><Icon name="x" size={12} /></button>
                                     </div>
                                 ))}
-                                {selectedItems.length === 0 && <p className="text-gray-500 text-sm">Ничего не выбрано</p>}
+                                {selectedItems.length === 0 && <p className="text-gray-500 text-xs italic">Ничего не выбрано в портфолио</p>}
                             </div>
                         </div>
-                        {warn && (
-                            <div className="bg-yellow-500/20 p-6 rounded-2xl border border-yellow-500/40">
-                                <p className="text-yellow-400 font-bold mb-4">Концепция не заполнена. Отправить как есть?</p>
+                        {warn ? (
+                            <div className="bg-yellow-500/10 p-6 rounded-2xl border border-yellow-500/30">
+                                <p className="text-yellow-400 font-bold mb-6 text-center">Концепция не заполнена. Точно отправляем?</p>
                                 <div className="flex gap-4">
-                                    <button type="button" onClick={() => setWarn(false)} className="bg-white/10 px-6 py-2 rounded-xl text-sm font-bold">Ой, допишу</button>
-                                    <button type="button" onClick={send} className="bg-yellow-500 text-black px-6 py-2 rounded-xl text-sm font-bold">Да, отправляй</button>
+                                    <button type="button" onClick={() => setWarn(false)} className="flex-1 bg-white/10 px-6 py-4 rounded-xl text-xs font-bold uppercase">Ой, допишу</button>
+                                    <button type="button" onClick={send} className="flex-1 bg-yellow-500 text-black px-6 py-4 rounded-xl text-xs font-black uppercase shadow-xl">Да, отправляй</button>
                                 </div>
                             </div>
-                        )}
-                        {!warn && (
-                            <button type="submit" disabled={sending} className="w-full bg-white text-black py-5 rounded-2xl font-black text-xl hover:bg-gray-200 disabled:bg-gray-700 transition-all">
+                        ) : (
+                            <button type="submit" disabled={sending} className="w-full bg-white text-black py-6 rounded-3xl font-black text-xl uppercase tracking-widest hover:bg-gray-200 active:scale-[0.98] disabled:bg-gray-700 transition-all shadow-[0_10px_40px_rgba(255,255,255,0.1)]">
                                 {sending ? 'ОТПРАВКА...' : 'ОТПРАВИТЬ ТЗ'}
                             </button>
                         )}
