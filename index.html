@@ -257,9 +257,8 @@
                     </div>
                 </div>
                 <div className="rounded-[2.5rem] overflow-hidden aspect-[4/5] relative border border-white/10 shadow-2xl hidden lg:block">
-                    {/* Используем качественное изображение шефа с Unsplash, так как blob не работает */}
                     <img 
-                        src="https://images.unsplash.com/photo-1577214190418-6395995e8083?auto=format&fit=crop&q=80&w=1000" 
+                        src="https://www.image2url.com/r2/default/images/1776075409086-0e8d3eb8-d6f0-4551-854f-922fb64c8825.png" 
                         alt="Шеф-повар"
                         className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
                     />
@@ -318,7 +317,6 @@
 
             const send = async () => {
                 if (!formData.dateFromObj || !formData.dateToObj) {
-                    alert('Пожалуйста, выберите сроки на календаре!');
                     return;
                 }
                 setSending(true);
@@ -351,7 +349,7 @@
                     });
                     await Promise.all([sheetPromise, emailPromise]);
                     setSubmitted(true);
-                } catch (e) { alert('Ошибка при отправке.'); } 
+                } catch (e) { console.error('Ошибка при отправке.'); } 
                 finally { setSending(false); }
             };
 
@@ -456,7 +454,7 @@
                             )}
                         </div>
 
-                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 space-y-4 shadow-2xl">
+                        <div className="bg-[#111] p-8 lg:p-12 rounded-[2.5rem] border border-white/10 shadow-2xl">
                             <h3 className="text-xs font-black text-purple-400 uppercase tracking-[0.3em] flex items-center gap-3"><Icon name="message-square" size={16}/> Комментарий</h3>
                             <textarea placeholder="Любые мысли, пожелания или важные уточнения..." className="w-full bg-black border border-white/10 p-5 rounded-[1.5rem] h-32 outline-none focus:border-purple-500 transition-all placeholder:text-gray-700 resize-none shadow-inner" value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} />
                         </div>
