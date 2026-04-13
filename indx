@@ -1,0 +1,774 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Menu, X, ChevronRight, Camera, Link as LinkIcon, 
+  Calendar, MapPin, User, CheckCircle2, Minus, Plus, Utensils, Loader2
+} from 'lucide-react';
+
+// СЮДА ВСТАВИШЬ ССЫЛКУ ОТ SHEETDB ДЛЯ ЗАПИСИ (например: https://sheetdb.io/api/v1/ab1cd2ef3gh4)
+const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/hij5zlohk9jho';
+
+// ТВОЯ ССЫЛКА НА CSV ДЛЯ ЧТЕНИЯ ПОРТФОЛИО
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHNaZVcGKnkCQmijqk2xGoc6Bn3tSNFwFUXUBDYGka0rHGDraOvOzfz3nu4zXOOAfbrhqrkJ9p-q5o/pub?gid=1091499446&single=true&output=csv';
+
+// СЮДА ВСТАВИШЬ ССЫЛКУ НА CSV ДЛЯ ВКЛАДКИ "О НАС" (пока тут пусто, будут дефолтные тексты)
+const ABOUT_CSV_URL = ''; 
+
+// Простой и быстрый парсер CSV файлов
+const parseCSV = (csvText) => {
+  const lines = csvText.split('\n').filter(line => line.trim() !== '');
+  if (lines.length < 2) return []; // Если только заголовки или пусто
+
+  const items = [];
+  // Начинаем с 1, пропуская 0-ю строку (там заголовки колонок)
+  for (let i = 1; i < lines.length; i++) {
+    // Регулярка для правильного разбиения по запятым (игнорирует запятые внутри кавычек)
+    const currentLine = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+    
+    // Берем данные строго по порядку колонок: ID | Категория | Наименование | Описание | Фото
+    const id = (currentLine[0] || '').replace(/^"|"$/g, '').trim();
+    const category = (currentLine[1] || '').replace(/^"|"$/g, '').trim();
+    const title = (currentLine[2] || '').replace(/^"|"$/g, '').trim();
+    const description = (currentLine[3] || '').replace(/^"|"$/g, '').trim();
+    const image = (currentLine[4] || '').replace(/^"|"$/g, '').trim();
+
+    // Если есть хотя бы категория и название - добавляем
+    if (category && title) {
+      items.push({ 
+        id: id || `item-${i}`, // Генерим ID, если его забыли указать
+        category, 
+        title, 
+        description,
+        image 
+      });
+    }
+  }
+  return items;
+};
+
+// Парсер для страницы "О нас" (читает только вторую строку)
+const parseAboutCSV = (csvText) => {
+  const lines = csvText.split('\n').filter(line => line.trim() !== '');
+  if (lines.length < 2) return null;
+  
+  // Берем вторую строку (индекс 1), так как в 0-й заголовки
+  const dataLine = lines[1].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+  
+  return {
+    title1: (dataLine[0] || '').replace(/^"|"$/g, '').trim(),
+    title2: (dataLine[1] || '').replace(/^"|"$/g, '').trim(),
+    description: (dataLine[2] || '').replace(/^"|"$/g, '').trim(),
+    buttonText: (dataLine[3] || '').replace(/^"|"$/g, '').trim(),
+    stat1Num: (dataLine[4] || '').replace(/^"|"$/g, '').trim(),
+    stat1Text: (dataLine[5] || '').replace(/^"|"$/g, '').trim(),
+    stat2Num: (dataLine[6] || '').replace(/^"|"$/g, '').trim(),
+    stat2Text: (dataLine[7] || '').replace(/^"|"$/g, '').trim(),
+    stat3Num: (dataLine[8] || '').replace(/^"|"$/g, '').trim(),
+    stat3Text: (dataLine[9] || '').replace(/^"|"$/g, '').trim(),
+    image: (dataLine[10] || '').replace(/^"|"$/g, '').trim(),
+  };
+};
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('welcome');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // Стейт для данных страницы "О нас"
+  const [aboutData, setAboutData] = useState({});
+
+  // Поднимаем стейт анкеты сюда, чтобы данные не стирались при переходе по вкладкам
+  const [formData, setFormData] = useState({
+    fullName: '',
+    city: '',
+    contacts: '',
+    concept: '',
+    dateFrom: '',
+    dateTo: '',
+    menuLink: ''
+  });
+  const [dishCounts, setDishCounts] = useState({});
+
+  // Подтягиваем данные из твоих CSV
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingData(true);
+      try {
+        // 1. Грузим портфолио
+        const resPort = await fetch(CSV_URL);
+        if (resPort.ok) {
+          const csvText = await resPort.text();
+          const parsedItems = parseCSV(csvText);
+          if (parsedItems.length > 0) {
+            setPortfolioItems(parsedItems);
+            const uniqueCategories = [...new Set(parsedItems.map(item => item.category))];
+            setCategories(uniqueCategories);
+          } else {
+            useFallbackData();
+          }
+        } else {
+          useFallbackData();
+        }
+
+        // 2. Грузим инфу "О нас" (если ссылка добавлена)
+        if (ABOUT_CSV_URL && ABOUT_CSV_URL.includes('docs.google.com')) {
+          const resAbout = await fetch(ABOUT_CSV_URL);
+          if (resAbout.ok) {
+            const aboutText = await resAbout.text();
+            const parsedAbout = parseAboutCSV(aboutText);
+            if (parsedAbout && parsedAbout.title1) {
+              setAboutData(parsedAbout);
+            }
+          }
+        }
+        
+      } catch (error) {
+        console.error('Ошибка при чтении Гугл Таблицы:', error);
+        useFallbackData();
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const useFallbackData = () => {
+    const fallbackCats = ['Роллы', 'Горячие блюда', 'Десерты'];
+    setCategories(fallbackCats);
+    setPortfolioItems(fallbackCats.flatMap((category, i) => ([{
+      id: `${category}-demo`,
+      category,
+      title: `Пример: ${category}`,
+      image: 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?auto=format&fit=crop&q=80&w=800'
+    }])));
+  };
+
+  const toggleItemSelection = (item) => {
+    setSelectedItems(prev => 
+      prev.some(i => i.id === item.id) 
+        ? prev.filter(i => i.id !== item.id) 
+        : [...prev, item]
+    );
+  };
+
+  const navigateTo = (tab) => {
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+    window.scrollTo(0, 0);
+  };
+
+  // Добавляем функцию мягкого сброса всего приложения
+  const resetApp = () => {
+    setFormData({
+      fullName: '',
+      city: '',
+      contacts: '',
+      concept: '',
+      dateFrom: '',
+      dateTo: '',
+      menuLink: ''
+    });
+    setDishCounts({});
+    setSelectedItems([]);
+    navigateTo('welcome');
+  };
+
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white">
+        <Loader2 className="animate-spin text-purple-500 mb-4" size={48} />
+        <h2 className="text-xl font-bold tracking-widest">TASTELAB</h2>
+        <p className="text-gray-500 mt-2 text-sm">Тянем меню из базы...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-purple-500 selection:text-white">
+      {/* Навигация */}
+      <nav className="fixed w-full z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-20 items-center">
+            <div className="flex-shrink-0 flex items-center cursor-pointer" onClick={() => navigateTo('welcome')}>
+              <span className="text-2xl font-black tracking-tighter">
+                TASTE<span className="text-purple-500">LAB</span>
+              </span>
+            </div>
+            
+            <div className="hidden md:flex space-x-8">
+              <button onClick={() => navigateTo('welcome')} className={`text-sm font-medium transition-colors hover:text-purple-400 ${activeTab === 'welcome' ? 'text-purple-500' : 'text-gray-300'}`}>О нас</button>
+              <button onClick={() => navigateTo('portfolio')} className={`text-sm font-medium transition-colors hover:text-purple-400 ${activeTab === 'portfolio' ? 'text-purple-500' : 'text-gray-300'}`}>Портфолио</button>
+              <button 
+                onClick={() => navigateTo('brief')} 
+                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-medium transition-all shadow-[0_0_15px_rgba(147,51,234,0.3)] flex items-center gap-2"
+              >
+                Составить ТЗ 
+                {selectedItems.length > 0 && (
+                  <span className="bg-white text-purple-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                    {selectedItems.length}
+                  </span>
+                )}
+              </button>
+            </div>
+
+            <div className="md:hidden flex items-center">
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-300 hover:text-white p-2">
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Мобильное меню */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-[#111] border-b border-white/10 p-4 space-y-4">
+            <button onClick={() => navigateTo('welcome')} className="block w-full text-left text-lg font-medium text-gray-300 hover:text-purple-500">О нас</button>
+            <button onClick={() => navigateTo('portfolio')} className="block w-full text-left text-lg font-medium text-gray-300 hover:text-purple-500">Портфолио</button>
+            <button onClick={() => navigateTo('brief')} className="block w-full bg-purple-600 text-white text-center py-3 rounded-xl font-medium mt-4">
+              Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}
+            </button>
+          </div>
+        )}
+      </nav>
+
+      {/* Основной контент */}
+      <main className="pt-20">
+        {activeTab === 'welcome' && (
+          <WelcomePage onNext={() => navigateTo('portfolio')} data={aboutData} />
+        )}
+        {activeTab === 'portfolio' && (
+          <PortfolioPage 
+            items={portfolioItems}
+            categories={categories}
+            onNext={() => navigateTo('brief')} 
+            selectedItems={selectedItems} 
+            toggleItem={toggleItemSelection} 
+          />
+        )}
+        {activeTab === 'brief' && (
+          <BriefPage 
+            categories={categories}
+            selectedItems={selectedItems} 
+            toggleItem={toggleItemSelection} 
+            onBackToPortfolio={() => navigateTo('portfolio')} 
+            formData={formData}
+            setFormData={setFormData}
+            dishCounts={dishCounts}
+            setDishCounts={setDishCounts}
+            onReset={resetApp} // Передаем функцию сброса
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+// 1. СТРАНИЦА ПРИВЕТСТВИЯ
+function WelcomePage({ onNext, data }) {
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+      <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="space-y-8 relative">
+          <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full blur-3xl opacity-20 -z-10 animate-pulse"></div>
+          
+          <h1 className="text-5xl lg:text-7xl font-black leading-tight">
+            {data.title1 || 'Создаем'} <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">
+              {data.title2 || 'хитовые меню'}
+            </span>
+          </h1>
+          <p className="text-xl text-gray-400 leading-relaxed max-w-lg whitespace-pre-line">
+            {data.description || 'Мы — команда шефов и концепт-мейкеров. Разрабатываем прорывные гастрономические решения для вашего бизнеса. От стрит-фуда до fine dining.'}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button onClick={onNext} className="bg-white text-black px-8 py-4 rounded-full font-bold hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+              {data.buttonText || 'Смотреть работы'} <ChevronRight size={20} />
+            </button>
+          </div>
+          
+          <div className="pt-12 grid grid-cols-3 gap-8 border-t border-white/10">
+            <div>
+              <div className="text-3xl font-black text-purple-500">{data.stat1Num || '100+'}</div>
+              <div className="text-sm text-gray-500 mt-1">{data.stat1Text || 'Открытых проектов'}</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-purple-500">{data.stat2Num || '6'}</div>
+              <div className="text-sm text-gray-500 mt-1">{data.stat2Text || 'Направлений кухни'}</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-purple-500">{data.stat3Num || '14'}</div>
+              <div className="text-sm text-gray-500 mt-1">{data.stat3Text || 'Дней на старт'}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="relative rounded-3xl overflow-hidden aspect-[4/5] border border-white/10 group">
+          <img 
+            src={data.image || 'https://images.unsplash.com/photo-1556155092-490a1ba16284?auto=format&fit=crop&q=80&w=1000'} 
+            alt="Team" 
+            className="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition-opacity duration-500 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-8">
+            <h3 className="text-2xl font-bold">Личный подход</h3>
+            <p className="text-gray-300 mt-2">С вами работает персональный бренд-шеф</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 2. ПОРТФОЛИО
+function PortfolioPage({ items = [], categories = [], onNext, selectedItems = [], toggleItem }) {
+  const [activeCategory, setActiveCategory] = useState('Все');
+
+  const filteredItems = activeCategory === 'Все' 
+    ? items 
+    : items.filter(item => item.category === activeCategory);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="text-center mb-16">
+        <h2 className="text-4xl md:text-5xl font-black mb-6">Наши <span className="text-purple-500">работы</span></h2>
+        <p className="text-gray-400 max-w-2xl mx-auto text-lg">Выверенные рецептуры, стильная подача и фокус на фудкост.</p>
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-3 mb-12">
+        <button 
+          onClick={() => setActiveCategory('Все')}
+          className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === 'Все' ? 'bg-white text-black' : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white border border-white/5'}`}
+        >
+          Все
+        </button>
+        {categories.map(cat => (
+          <button 
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${activeCategory === cat ? 'bg-purple-600 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white border border-white/5'}`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {items.length === 0 ? (
+        <div className="text-center text-gray-500 py-12">Портфолио пока пустое. Добавьте данные в таблицу.</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {filteredItems.map(item => {
+            const isSelected = selectedItems.some(i => i.id === item.id);
+            // Простая проверка, есть ли ссылка на картинку, если нет - ставим плейсхолдер
+            const imgUrl = item.image && item.image.startsWith('http') ? item.image : 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?auto=format&fit=crop&q=80&w=800';
+
+            return (
+              <div key={item.id} className={`group relative rounded-2xl overflow-hidden bg-[#111] border aspect-square transition-all ${isSelected ? 'border-purple-500 shadow-[0_0_20px_rgba(147,51,234,0.3)]' : 'border-white/5'}`}>
+                <img 
+                  src={imgUrl} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-70 group-hover:opacity-100"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent opacity-90" />
+                <div className="absolute bottom-0 left-0 p-6 w-full transform translate-y-2 group-hover:translate-y-0 transition-transform flex justify-between items-end gap-4">
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-2 block">{item.category}</span>
+                    <h3 className="text-xl font-bold mb-1">{item.title}</h3>
+                    {item.description && (
+                      <p className="text-sm text-gray-300 line-clamp-2">{item.description}</p>
+                    )}
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); toggleItem(item); }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'bg-purple-500 text-white' : 'bg-white/10 text-white hover:bg-purple-500'}`}
+                  >
+                    {isSelected ? <CheckCircle2 size={20} /> : <Plus size={20} />}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="text-center bg-gradient-to-r from-[#111] to-[#1a1a1a] rounded-3xl p-12 border border-white/10">
+        <h3 className="text-2xl font-bold mb-4">Готовы обсудить ваше меню?</h3>
+        <p className="text-gray-400 mb-8 max-w-xl mx-auto">Заполните короткий бриф, чтобы мы поняли задачу и подготовили предметное предложение.</p>
+        <button onClick={onNext} className="bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-full font-bold transition-colors inline-flex items-center gap-2">
+          Перейти к ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`} <ChevronRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 3. АНКЕТА (БРИФ)
+function BriefPage({ categories = [], selectedItems = [], toggleItem, onBackToPortfolio, formData, setFormData, dishCounts, setDishCounts, onReset }) {
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+  const [submitError, setSubmitError] = useState(''); // Добавили стейт для красивой ошибки
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (showWarning) setShowWarning(false); // Прячем варнинг, если юзер начал дописывать
+    if (submitError) setSubmitError(''); // Прячем ошибку при вводе
+  };
+
+  const updateDishCount = (category, delta) => {
+    setDishCounts(prev => ({
+      ...prev,
+      [category]: Math.max(0, (prev[category] || 0) + delta)
+    }));
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    
+    // ФИО, Город, Контакты и Даты теперь строго обязательны (через required в HTML).
+    // Поэтому тут проверяем только Концепцию, если она пустая — показываем наш мягкий варнинг.
+    if (!formData.concept.trim()) {
+      setShowWarning(true);
+    } else {
+      executeSubmit();
+    }
+  };
+
+  const executeSubmit = async () => {
+    setIsSubmitting(true);
+    setShowWarning(false);
+
+    const countsString = Object.entries(dishCounts)
+      .filter(([_, count]) => count > 0)
+      .map(([cat, count]) => `${cat}: ${count} шт.`)
+      .join(' | ');
+
+    // Формируем данные для SheetDB 
+    const payload = {
+      data: {
+        "Дата": new Date().toLocaleString('ru-RU'),
+        "Имя": formData.fullName,
+        "Город": formData.city,
+        "Концепция": formData.concept,
+        "Контакты": formData.contacts,
+        "Сроки (от)": formData.dateFrom,
+        "Сроки (до)": formData.dateTo,
+        "Ссылка на материалы": formData.menuLink || '-',
+        "Выбранные блюда": `Нужно разработать: ${countsString || 'Не указано'} || Референсы: ${selectedItems.length > 0 ? selectedItems.map(item => `${item.category}: ${item.title}`).join('; ') : 'Ничего не выбрано'}`
+      }
+    };
+
+    try {
+      // Отправляем POST запрос во вкладку ТЗ
+      const response = await fetch(`${SHEETDB_API_URL}?sheet=ТЗ`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      // SheetDB возвращает объект { created: 1 } при успешной записи
+      if (result.created === 1 || result.created) { 
+        setIsSubmitted(true);
+        setSubmitError('');
+      } else {
+        console.error('Ошибка сохранения:', result);
+        setSubmitError(`Косяк на сервере: ${result.error || 'проверь названия колонок в таблице'}`);
+      }
+    } catch (error) {
+      console.error('Ошибка сети:', error);
+      setSubmitError('Проблема с интернетом или база недоступна. Попробуй еще раз.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isSubmitted) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-32 text-center">
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-purple-500/20 text-purple-500 mb-8">
+          <CheckCircle2 size={48} />
+        </div>
+        <h2 className="text-4xl font-black mb-4">ТЗ успешно отправлено!</h2>
+        <p className="text-xl text-gray-400 mb-8">Мы изучим информацию и свяжемся с вами в ближайшее время для обсуждения деталей.</p>
+        <button 
+          onClick={() => { setIsSubmitted(false); onReset(); }} 
+          className="text-purple-400 hover:text-white font-medium transition-colors"
+        >
+          Вернуться на главную
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="mb-12">
+        <h2 className="text-4xl font-black mb-4">Составить <span className="text-purple-500">ТЗ</span></h2>
+        <p className="text-gray-400 text-lg">Расскажите о вашем проекте, чтобы мы подготовили точное предложение.</p>
+      </div>
+
+      <form onSubmit={handleFormSubmit} className="space-y-10">
+        <div className="bg-[#111] border border-white/10 rounded-3xl p-8 space-y-6 shadow-xl">
+          <h3 className="text-xl font-bold border-b border-white/10 pb-4 flex items-center gap-2">
+            <User className="text-purple-500" size={24} /> Контактная информация
+          </h3>
+          
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">ФИО *</label>
+              <input 
+                required
+                type="text" 
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                placeholder="Иванов Иван"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">Город *</label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-3.5 text-gray-500" size={20} />
+                <input 
+                  required
+                  type="text" 
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                  placeholder="Москва"
+                />
+              </div>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-400 mb-2">Связь (Телефон / Email) *</label>
+              <input 
+                required
+                type="text" 
+                name="contacts"
+                value={formData.contacts}
+                onChange={handleInputChange}
+                className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+                placeholder="+7 (999) 000-00-00 или mail@example.com"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#111] border border-white/10 rounded-3xl p-8 space-y-6 shadow-xl">
+          <h3 className="text-xl font-bold border-b border-white/10 pb-4 flex items-center gap-2">
+            <Utensils className="text-purple-500" size={24} /> О проекте
+          </h3>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Направление концепции</label>
+            <textarea 
+              name="concept"
+              value={formData.concept}
+              onChange={handleInputChange}
+              rows={3}
+              className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all"
+              placeholder="Например: Азиатский стрит-фуд с акцентом на авторские роллы..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Желаемые сроки проведения работ *</label>
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1">
+                <Calendar className="absolute left-4 top-3.5 text-gray-500 pointer-events-none" size={20} />
+                <input 
+                  required
+                  type="date" 
+                  name="dateFrom"
+                  value={formData.dateFrom}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                />
+              </div>
+              <span className="text-gray-500">—</span>
+              <div className="relative flex-1">
+                <Calendar className="absolute left-4 top-3.5 text-gray-500 pointer-events-none" size={20} />
+                <input 
+                  required
+                  type="date" 
+                  name="dateTo"
+                  value={formData.dateTo}
+                  onChange={handleInputChange}
+                  className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-all [color-scheme:dark]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-[#111] border border-white/10 rounded-3xl p-8 space-y-6 shadow-xl">
+          <h3 className="text-xl font-bold border-b border-white/10 pb-4">Материалы и текущее меню</h3>
+          <p className="text-sm text-gray-400">Укажите ссылку на облако (Google Drive / Яндекс Диск) с фото или меню.</p>
+          
+          <div className="relative">
+            <LinkIcon className="absolute left-4 top-3.5 text-gray-500" size={20} />
+            <input 
+              type="url" 
+              name="menuLink"
+              value={formData.menuLink}
+              onChange={handleInputChange}
+              className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl pl-12 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-purple-500 transition-all"
+              placeholder="Вставьте ссылку на папку с материалами"
+            />
+          </div>
+        </div>
+
+        {categories.length > 0 && (
+          <div className="bg-[#111] border border-white/10 rounded-3xl p-8 space-y-6 shadow-xl">
+            <div>
+              <h3 className="text-xl font-bold mb-2">Количество блюд в разработку</h3>
+              <p className="text-sm text-gray-400 pb-4 border-b border-white/10">Укажите, сколько позиций нужно проработать.</p>
+            </div>
+            
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {categories.map(category => (
+                <div key={category} className="bg-[#0a0a0a] border border-white/10 rounded-xl p-4 flex items-center justify-between">
+                  <span className="font-medium text-gray-300 truncate pr-2">{category}</span>
+                  <div className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-1 shrink-0">
+                    <button 
+                      type="button"
+                      onClick={() => updateDishCount(category, -1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-md bg-[#222] hover:bg-[#333] text-gray-400 hover:text-white transition-colors"
+                    >
+                      <Minus size={16} />
+                    </button>
+                    <span className="w-6 text-center font-bold text-lg">
+                      {dishCounts[category] || 0}
+                    </span>
+                    <button 
+                      type="button"
+                      onClick={() => updateDishCount(category, 1)}
+                      className="w-8 h-8 flex items-center justify-center rounded-md bg-purple-600 hover:bg-purple-500 text-white transition-colors"
+                    >
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-white/10 flex justify-between items-center">
+              <span className="text-gray-400 font-medium">Итого позиций:</span>
+              <span className="text-3xl font-black text-purple-500">
+                {Object.values(dishCounts).reduce((a, b) => a + b, 0)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-[#111] border border-purple-500/30 rounded-3xl p-8 space-y-6 shadow-[0_0_30px_rgba(147,51,234,0.05)]">
+          <div className="flex justify-between items-center border-b border-white/10 pb-4">
+            <div>
+              <h3 className="text-xl font-bold mb-2">Выбранные референсы</h3>
+              <p className="text-sm text-gray-400">Блюда из портфолио, взятые за ориентир.</p>
+            </div>
+            <span className="bg-purple-500/20 text-purple-400 py-1 px-3 rounded-full font-bold text-sm">
+              {selectedItems.length} шт
+            </span>
+          </div>
+          
+          {selectedItems.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">Вы еще не выбрали ни одного блюда.</p>
+              <button 
+                type="button"
+                onClick={onBackToPortfolio}
+                className="text-purple-400 hover:text-white transition-colors text-sm font-medium border border-purple-500/50 rounded-full px-6 py-2"
+              >
+                Перейти в портфолио
+              </button>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 gap-4">
+              {selectedItems.map(item => (
+                <div key={item.id} className="bg-[#0a0a0a] border border-white/10 rounded-xl p-3 flex items-center gap-4 group">
+                  {/* Защита от пустых ссылок на фото */}
+                  <img src={item.image && item.image.startsWith('http') ? item.image : 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?auto=format&fit=crop&q=80&w=800'} alt={item.title} className="w-16 h-16 rounded-lg object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-purple-400 font-bold mb-1">{item.category}</p>
+                    <p className="text-sm font-medium text-white truncate">{item.title}</p>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => toggleItem(item)}
+                    className="p-2 text-gray-500 hover:text-red-500 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="pt-8">
+          {showWarning ? (
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-6">
+              <h4 className="text-yellow-400 font-bold text-lg mb-2">Котик, ты не описал(а) концепцию!</h4>
+              <p className="text-gray-300 text-sm mb-6">Обычно мы просим вкратце рассказать про направление кухни, чтобы понимать с чем предстоит работать. Точно отправляем ТЗ так?</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setShowWarning(false)}
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl transition-colors"
+                >
+                  Ой, сейчас допишу
+                </button>
+                <button 
+                  type="button" 
+                  onClick={executeSubmit}
+                  className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 rounded-xl transition-colors"
+                >
+                  Да, отправляй так
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <button 
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full text-lg font-bold py-5 rounded-2xl transition-all flex items-center justify-center gap-2 ${
+                  isSubmitting 
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                    : 'bg-white text-black hover:bg-gray-200'
+                }`}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="animate-spin" size={20} /> Отправляем...
+                  </span>
+                ) : (
+                  'Отправить ТЗ в работу'
+                )}
+              </button>
+              
+              {/* Красивый вывод ошибки вместо системного окна */}
+              {submitError && (
+                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-center">
+                  <p className="text-red-400 text-sm font-medium">{submitError}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
