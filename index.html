@@ -34,7 +34,8 @@
         .bg-container {
             position: fixed;
             inset: 0;
-            background-image: url('https://www.image2url.com/r2/default/images/1776511010980-24ecdd2c-e68a-4a32-8f80-4a38018b3f75.jpg');
+            background-color: #e5e7eb; /* Заглушка, пока не загрузишь свои фото */
+            background-image: url('./bg-mobile.jpg'); /* <-- ФАЙЛ ДЛЯ ТЕЛЕФОНА */
             background-size: cover; 
             background-position: center;
             background-repeat: no-repeat;
@@ -51,7 +52,7 @@
         /* Светлая тема (Горизонталка для ПК) */
         @media (min-width: 1024px) {
             .bg-container {
-                background-image: url('https://www.image2url.com/r2/default/images/1776511048415-eaa30f0e-94cb-48a9-b53a-6df55172bd6f.jpg');
+                background-image: url('./bg-desktop.jpg'); /* <-- ФАЙЛ ДЛЯ КОМПА */
                 background-size: cover; 
                 background-position: center;
             }
