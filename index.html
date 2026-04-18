@@ -195,7 +195,6 @@
             const [formData, setFormData] = useState({ fullName: '', city: '', contacts: '', concept: '', dateFromObj: null, dateToObj: null, menuLink: '', comment: '' });
             const [dishCounts, setDishCounts] = useState({});
             
-            // Проверка авторизации админа (сохраняем в localStorage для персистентности)
             const [isAdmin, setIsAdmin] = useState(localStorage.getItem('is_tastelab_admin') === 'true');
             const [showAdminAuth, setShowAdminAuth] = useState(false);
             const [adminPwd, setAdminPwd] = useState('');
@@ -329,7 +328,6 @@
                         {activeTab === 'brief' && <BriefPage fb={fb} appId={appId} categories={categories} selectedItems={selectedItems} setSelectedItems={setSelectedItems} formData={formData} setFormData={setFormData} dishCounts={dishCounts} setDishCounts={setDishCounts} onReset={resetApp} onAddMore={() => navigateTo('portfolio')} />}
                     </main>
 
-                    {/* Секретная кнопка входа */}
                     <button 
                         onClick={() => {
                             if (isAdmin) navigateTo('admin');
@@ -455,40 +453,40 @@
                     {adminTab === 'portfolio' && (
                         <>
                             <div className={`glass-card p-6 lg:p-10 rounded-[2rem] space-y-6 ${editingId ? 'ring-4 ring-purple-500/20 shadow-xl' : ''}`}>
-                                <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-4"><h3 className="font-black uppercase tracking-widest flex items-center gap-2">{editingId ? 'Редактирование' : 'Добавить новую'}</h3>{editingId && <button onClick={() => {setEditingId(null); setNewItem({category:'', title:'', description:''}); setImagePreview("");}} className="text-xs font-black text-gray-400">Отмена</button>}</div>
+                                <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-4"><h3 className="font-black uppercase tracking-widest flex items-center gap-2">{editingId ? 'Редактирование' : 'Добавить новую'}</h3>{editingId && <button onClick={() => {setEditingId(null); setNewItem({category:'', title:'', description:''}); setImagePreview("");}} className="text-xs font-black text-gray-400 hover:text-gray-900">Отмена</button>}</div>
                                 <form onSubmit={handleAddOrEdit} className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-4">
-                                        <input placeholder="Категории" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
-                                        <input placeholder="Название" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                                        <input placeholder="Категории" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
+                                        <input placeholder="Название" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
                                     </div>
                                     <div className="flex flex-col sm:flex-row items-center gap-4">
-                                        <label className="w-full sm:flex-1 border-2 border-dashed border-gray-300 hover:border-purple-400 bg-white/50 p-6 rounded-xl text-center cursor-pointer flex flex-col items-center justify-center min-h-[100px] group transition-colors"><input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files[0]; if(file) {setImageFile(file); setImagePreview(URL.createObjectURL(file));}}} /><Icon name="upload" className="text-gray-400 group-hover:text-purple-600 mb-2" size={24} /><span className="text-xs font-bold text-gray-500 uppercase">{imageFile ? imageFile.name : (editingId ? "Сменить фото" : "Выбрать фото")}</span></label>
-                                        {imagePreview && <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border relative"><img src={imagePreview} className="w-full h-full object-cover" />{imageFile && <button onClick={() => {setImageFile(null); if(!editingId) setImagePreview("");}} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500"><Icon name="x" size={12} /></button>}</div>}
+                                        <label className="w-full sm:flex-1 border-2 border-dashed border-gray-300 hover:border-purple-400 bg-white/50 p-6 rounded-xl text-center cursor-pointer flex flex-col items-center justify-center min-h-[100px] group transition-colors"><input type="file" accept="image/*" className="hidden" onChange={e => { const file = e.target.files[0]; if(file) {setImageFile(file); setImagePreview(URL.createObjectURL(file));}}} /><Icon name="upload" className="text-gray-400 group-hover:text-purple-600 mb-2 transition-colors" size={24} /><span className="text-xs font-bold text-gray-500 uppercase">{imageFile ? imageFile.name : (editingId ? "Сменить фото" : "Выбрать фото")}</span></label>
+                                        {imagePreview && <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border relative shadow-sm"><img src={imagePreview} className="w-full h-full object-cover" />{imageFile && <button onClick={() => {setImageFile(null); if(!editingId) setImagePreview("");}} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 transition-opacity"><Icon name="x" size={12} /></button>}</div>}
                                     </div>
-                                    <textarea placeholder="Описание" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm h-24 resize-none outline-none focus:border-purple-500" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                                    <textarea placeholder="Описание" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm h-24 resize-none outline-none focus:border-purple-500 transition-colors" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                                     <div className="flex items-center gap-4"><button type="submit" disabled={!imageFile && !editingId} className="btn-primary px-8 py-3 rounded-xl font-black text-sm uppercase disabled:opacity-50">{editingId ? "Сохранить" : "Добавить"}</button>{statusMsg && <span className="text-xs font-bold text-gray-600">{statusMsg}</span>}</div>
                                 </form>
                             </div>
                             <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-3">
                                 {portfolioItems.map((item, index) => (
-                                    <div key={item.id} className={`flex items-center gap-3 bg-white/80 p-3 rounded-xl border ${editingId === item.id ? 'border-purple-400 shadow-md' : 'border-gray-100 shadow-sm'}`}>
+                                    <div key={item.id} className={`flex items-center gap-3 bg-white/80 p-3 rounded-xl border ${editingId === item.id ? 'border-purple-400 shadow-md' : 'border-gray-100 shadow-sm'} transition-all`}>
                                         <div className="flex flex-col gap-1">
-                                            <button onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20"><Icon name="chevron-up" size={16} /></button>
-                                            <button onClick={() => moveItem(index, 1)} disabled={index === portfolioItems.length - 1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20"><Icon name="chevron-down" size={16} /></button>
+                                            <button onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 p-0.5"><Icon name="chevron-up" size={16} /></button>
+                                            <button onClick={() => moveItem(index, 1)} disabled={index === portfolioItems.length - 1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 p-0.5"><Icon name="chevron-down" size={16} /></button>
                                         </div>
                                         <img src={item.image} className="w-12 h-12 rounded-lg object-cover bg-gray-100" />
                                         <div className="flex-1 truncate cursor-pointer" onClick={() => {setEditingId(item.id); setNewItem({category:item.category||'', title:item.title||'', description:item.description||''}); setImagePreview(item.image); window.scrollTo({top:0, behavior:'smooth'});}}>
                                             <p className="text-[10px] font-black text-purple-500 uppercase truncate">{item.category || 'Без категории'}</p>
-                                            <p className="text-sm font-bold truncate">{item.title || 'Без названия'}</p>
+                                            <p className="text-sm font-bold truncate text-gray-900">{item.title || 'Без названия'}</p>
                                         </div>
                                         <div className="flex gap-1">
-                                            <button onClick={() => {setEditingId(item.id); setNewItem({category:item.category||'', title:item.title||'', description:item.description||''}); setImagePreview(item.image); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2 text-gray-400 hover:text-purple-600"><Icon name="pencil" size={18} /></button>
+                                            <button onClick={() => {setEditingId(item.id); setNewItem({category:item.category||'', title:item.title||'', description:item.description||''}); setImagePreview(item.image); window.scrollTo({top:0, behavior:'smooth'});}} className="p-2 text-gray-400 hover:text-purple-600 transition-colors"><Icon name="pencil" size={18} /></button>
                                             {deletingId === item.id ? (
                                                 <div className="flex gap-1 animate-in fade-in slide-in-from-right-2">
-                                                    <button onClick={async () => {const {db, fsMod} = fb; await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', item.id)); setDeletingId(null);}} className="bg-red-500 text-white px-2 rounded-lg text-[10px] uppercase font-black">Удалить</button>
-                                                    <button onClick={() => setDeletingId(null)} className="bg-gray-200 text-gray-700 px-2 rounded-lg text-[10px] uppercase font-black">Х</button>
+                                                    <button onClick={async () => {const {db, fsMod} = fb; await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', item.id)); setDeletingId(null);}} className="bg-red-500 text-white px-2 rounded-lg text-[10px] uppercase font-black shadow-sm">Удалить</button>
+                                                    <button onClick={() => setDeletingId(null)} className="bg-gray-200 text-gray-700 px-2 rounded-lg text-[10px] uppercase font-black">Отмена</button>
                                                 </div>
-                                            ) : <button onClick={() => setDeletingId(item.id)} className="p-2 text-gray-400 hover:text-red-500"><Icon name="trash" size={18} /></button>}
+                                            ) : <button onClick={() => setDeletingId(item.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors"><Icon name="trash" size={18} /></button>}
                                         </div>
                                     </div>
                                 ))}
@@ -501,8 +499,8 @@
                                 <div className="space-y-6">
                                     {briefs.map(brief => (
                                         <div key={brief.id} className="bg-white/80 p-6 lg:p-8 rounded-[2rem] border border-gray-100 shadow-sm relative group">
-                                            <button onClick={async () => { if(window.confirm('Удалить?')) { const {db, fsMod} = fb; await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'briefs', brief.id)); }}} className="absolute top-6 right-6 text-gray-300 hover:text-red-500"><Icon name="trash" size={20} /></button>
-                                            <div className="mb-6"><p className="text-[10px] text-purple-600 font-black uppercase mb-1">{brief['Дата']}</p><h4 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">{brief['Имя']}</h4><p className="text-sm font-bold text-gray-500">{brief['Город']} • {brief['Контакты']}</p></div>
+                                            <button onClick={async () => { if(window.confirm('Удалить?')) { const {db, fsMod} = fb; await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'briefs', brief.id)); }}} className="absolute top-6 right-6 text-gray-300 hover:text-red-500 transition-colors"><Icon name="trash" size={20} /></button>
+                                            <div className="mb-6 pr-10"><p className="text-[10px] text-purple-600 font-black uppercase mb-1">{brief['Дата']}</p><h4 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">{brief['Имя']}</h4><p className="text-sm font-bold text-gray-500">{brief['Город']} • {brief['Контакты']}</p></div>
                                             {brief.selectedImageData && brief.selectedImageData.length > 0 && (
                                                 <div className="mb-6 space-y-2">
                                                     <span className="text-[10px] font-black uppercase text-purple-600 flex items-center gap-2"><Icon name="camera" size={12}/> Выбранные фото ({brief.selectedImageData.length})</span>
@@ -512,7 +510,7 @@
                                                 </div>
                                             )}
                                             <div className="grid md:grid-cols-2 gap-4 text-sm">
-                                                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100"><span className="text-[9px] text-gray-400 font-black uppercase block mb-1">Концепция</span><p className="font-medium">{brief['Концепция']}</p></div>
+                                                <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100"><span className="text-[9px] text-gray-400 font-black uppercase block mb-1">Концепция</span><p className="font-medium text-gray-700">{brief['Концепция']}</p></div>
                                                 <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100"><span className="text-[9px] text-gray-400 font-black uppercase block mb-1">Сроки</span><p className="font-black text-gray-900">{brief['Сроки (от)']} — {brief['Сроки (до)']}</p></div>
                                             </div>
                                             <div className="bg-gray-900 p-4 rounded-2xl mt-4 text-white text-xs leading-relaxed"><span className="text-[9px] text-gray-500 font-black uppercase block mb-1">Детализация</span>{brief['Выбранные блюда']}</div>
@@ -528,7 +526,7 @@
 
         const WelcomePage = ({ onNext }) => (
             <div className="max-w-5xl mx-auto px-6 py-12 lg:py-24 flex flex-col items-center justify-center text-center min-h-[60vh]">
-                <div className="space-y-8"><h1 className="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-gray-900">ЛАБОРАТОРИЯ <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 text-glow">ХИТОВ</span></h1><p className="text-lg lg:text-xl text-black font-bold uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,1)]">Проектируем гастрономические смыслы. <br className="hidden md:block"/> От идеи до идеальной подачи.</p><button onClick={onNext} className="btn-primary px-10 py-4 rounded-full text-base font-black uppercase tracking-widest flex items-center gap-3 mx-auto shadow-xl">Портфолио <Icon name="arrow-right" size={18} /></button></div>
+                <div className="space-y-8"><h1 className="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-gray-900">ЛАБОРАТОРИЯ <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 text-glow">ХИТОВ</span></h1><p className="text-lg lg:text-xl text-black font-bold uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,1)]">Проектируем гастрономические смыслы. <br className="hidden md:block"/> От идеи до идеальной подачи.</p><button onClick={onNext} className="btn-primary px-10 py-4 rounded-full text-base font-black uppercase tracking-widest flex items-center gap-3 mx-auto shadow-xl transition-all active:scale-95">Портфолио <Icon name="arrow-right" size={18} /></button></div>
             </div>
         );
 
@@ -540,7 +538,7 @@
             return (
                 <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 mb-12">
-                        <div><h2 className="text-4xl lg:text-7xl font-black uppercase tracking-tighter mb-2">БАЗА <span className="text-purple-600">РЕФЕРЕНСОВ</span></h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Архив для вашего вдохновения</p></div>
+                        <div><h2 className="text-4xl lg:text-7xl font-black uppercase tracking-tighter mb-2 text-gray-900">БАЗА <span className="text-purple-600">РЕФЕРЕНСОВ</span></h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Архив для вашего вдохновения</p></div>
                         <div className="flex flex-wrap gap-2">{['Все', ...categories].map(c => <button key={c} onClick={() => setCat(c)} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase transition-all ${cat === c ? 'bg-purple-600 text-white shadow-lg' : 'bg-white/60 border border-gray-100 text-gray-500 hover:text-gray-900'}`}>{c}</button>)}</div>
                     </div>
                     <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-10">
@@ -574,48 +572,133 @@
                                     {previewItem.description && <p className="text-gray-500 font-medium mb-6 text-sm sm:text-base">{previewItem.description}</p>}
                                     <button onClick={(e) => { e.stopPropagation(); toggle(previewItem); }} className={`px-8 py-4 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl font-black uppercase text-xs ${selectedItems.find(x => x.id === previewItem.id) ? 'bg-purple-600 text-white' : 'bg-gray-900 text-white'}`}><Icon name={selectedItems.find(x => x.id === previewItem.id) ? 'check' : 'plus'} size={20} />{selectedItems.find(x => x.id === previewItem.id) ? 'Добавлено в бриф' : '+ Добавить в бриф'}</button>
                                 </div>
-                                <button onClick={() => setPreviewItem(null)} className="absolute top-4 right-4 bg-gray-900 text-white p-2 rounded-full"><Icon name="x" size={16} /></button>
+                                <button onClick={() => setPreviewItem(null)} className="absolute top-4 right-4 bg-gray-900 text-white p-2 rounded-full hover:scale-110 transition-transform"><Icon name="x" size={16} /></button>
                             </div>
                         </div>
                     )}
-                    <div className="mt-24 text-center p-12 glass-card rounded-[3rem] relative overflow-hidden group"><h3 className="text-2xl lg:text-5xl font-black mb-8 uppercase text-gray-900 relative z-10">Построим ваш проект вместе?</h3><button onClick={onNext} className="btn-primary px-16 py-5 rounded-full font-black uppercase tracking-[0.2em] relative z-10">Начать бриф</button></div>
+                    <div className="mt-24 text-center p-12 glass-card rounded-[3rem] relative overflow-hidden group"><h3 className="text-2xl lg:text-5xl font-black mb-8 uppercase text-gray-900 relative z-10">Построим ваш проект вместе?</h3><button onClick={onNext} className="btn-primary px-16 py-5 rounded-full font-black uppercase tracking-[0.2em] relative z-10 shadow-xl transition-all active:scale-95">Начать бриф</button></div>
                 </div>
             );
         };
 
         const BriefPage = ({ fb, appId, categories, selectedItems, setSelectedItems, formData, setFormData, dishCounts, setDishCounts, onReset, onAddMore }) => {
             const [submitted, setSubmitted] = useState(false); const [sending, setSending] = useState(false); const [warn, setWarn] = useState(false);
-            const fileToBase64 = (file) => new Promise(resolve => { const reader = new FileReader(); reader.onload = e => resolve(e.target.result); reader.readAsDataURL(file); });
-            const handleFileUpload = async e => {
-                const files = Array.from(e.target.files);
-                const newItems = await Promise.all(files.map(async (file, idx) => { const b64 = await fileToBase64(file); return { id: `local-${Date.now()}-${idx}`, category: 'Свой файл', title: file.name, image: b64, isLocal: true }; }));
-                setSelectedItems(prev => [...prev, ...newItems]);
+            const [uploadingStatus, setUploadingStatus] = useState("");
+
+            // Универсальный сжиматель для фото клиентов
+            const compressImage = (file) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width; let height = img.height;
+                            const maxDim = 800; // Оптимально для веба
+                            if (width > height && width > maxDim) { height *= maxDim / width; width = maxDim; }
+                            else if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+                            canvas.width = width; canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7)); // Сжимаем до 70% качества
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
             };
+
+            const handleFileUpload = async (e) => {
+                const files = Array.from(e.target.files);
+                if (!files.length) return;
+                
+                setUploadingStatus("Сжимаем фото...");
+                // Обрабатываем все файлы сразу
+                const newItems = await Promise.all(files.map(async (file, idx) => { 
+                    const compressed = await compressImage(file);
+                    return { 
+                        id: `local-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 4)}`, 
+                        category: 'Свой файл', 
+                        title: file.name, 
+                        image: compressed, 
+                        isLocal: true 
+                    }; 
+                }));
+                
+                setSelectedItems(prev => [...prev, ...newItems]);
+                setUploadingStatus("");
+            };
+
             const send = async () => {
                 if (!formData.dateFromObj || !formData.dateToObj) return;
                 setSending(true);
                 const itemsStr = Object.entries(dishCounts).filter(([_,v]) => v > 0).map(([c, v]) => `${c}: ${v}`).join(', ');
                 const refsStr = selectedItems.map(i => i.title || 'Блюдо').join(', ');
+                
+                // Важно: берем сами картинки (базу64) для сохранения в заявке
                 const imageData = selectedItems.map(i => ({ title: i.title, image: i.image }));
-                const finalData = { "Дата": new Date().toLocaleString('ru-RU'), "Имя": formData.fullName, "Город": formData.city, "Контакты": formData.contacts, "Концепция": formData.concept, "Сроки (от)": formData.dateFromObj.toLocaleDateString('ru-RU'), "Сроки (до)": formData.dateToObj.toLocaleDateString('ru-RU'), "Ссылка на материалы": formData.menuLink, "Комментарий": formData.comment || '-', "Выбранные блюда": `Нужно: ${itemsStr || 'не указано'} | Референсы: ${refsStr || 'нет'}`, "selectedImageData": imageData };
+
+                const finalData = { 
+                    "Дата": new Date().toLocaleString('ru-RU'), 
+                    "Имя": formData.fullName, 
+                    "Город": formData.city, 
+                    "Контакты": formData.contacts, 
+                    "Концепция": formData.concept, 
+                    "Сроки (от)": formData.dateFromObj.toLocaleDateString('ru-RU'), 
+                    "Сроки (до)": formData.dateToObj.toLocaleDateString('ru-RU'), 
+                    "Ссылка на материалы": formData.menuLink, 
+                    "Комментарий": formData.comment || '-', 
+                    "Выбранные блюда": `Нужно: ${itemsStr || 'не указано'} | Референсы: ${refsStr || 'нет'}`, 
+                    "selectedImageData": imageData 
+                };
+
                 try {
-                    let ps = [ fetch(SHEETDB_API_URL + '?sheet=ТЗ', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { ...finalData, "selectedImageData": "В админке" } }) }), fetch(`https://formspree.io/f/${FORMSPREE_ID}`, { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: `Заявка: ${formData.fullName}`, ...finalData, "selectedImageData": "В админке" }) }) ];
+                    let ps = [ 
+                        fetch(SHEETDB_API_URL + '?sheet=ТЗ', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: { ...finalData, "selectedImageData": "В админке" } }) }), 
+                        fetch(`https://formspree.io/f/${FORMSPREE_ID}`, { method: 'POST', headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }, body: JSON.stringify({ subject: `Заявка: ${formData.fullName}`, ...finalData, "selectedImageData": "В админке" }) }) 
+                    ];
                     if (fb) ps.push(fb.fsMod.addDoc(fb.fsMod.collection(fb.db, 'artifacts', appId, 'public', 'data', 'briefs'), { createdAt: Date.now(), ...finalData }));
-                    await Promise.all(ps); setSubmitted(true);
+                    await Promise.all(ps); 
+                    setSubmitted(true);
                 } catch (e) { console.error(e); } finally { setSending(false); }
             };
-            if (submitted) return <div className="py-24 text-center max-w-xl mx-auto px-6 modal-fade-in"><div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 text-purple-600 animate-bounce shadow-inner"><Icon name="check" size={40} /></div><h2 className="text-4xl font-black mb-3 uppercase">ПРИНЯТО</h2><p className="text-gray-500 mb-10 uppercase text-xs font-bold tracking-widest">ТЗ в обработке. Ожидайте звонка.</p><button onClick={onReset} className="text-purple-600 font-black text-sm uppercase tracking-widest border-b-2 border-purple-200 hover:border-purple-600 pb-1">Вернуться</button></div>;
+
+            if (submitted) return <div className="py-24 text-center max-w-xl mx-auto px-6 modal-fade-in"><div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 text-purple-600 animate-bounce shadow-inner"><Icon name="check" size={40} /></div><h2 className="text-4xl font-black mb-3 uppercase text-gray-900 tracking-tighter">ПРИНЯТО</h2><p className="text-gray-500 mb-10 uppercase text-xs font-bold tracking-widest">ТЗ в обработке. Ожидайте звонка.</p><button onClick={onReset} className="text-purple-600 font-black text-sm uppercase tracking-widest border-b-2 border-purple-200 hover:border-purple-600 pb-1 transition-all">Вернуться</button></div>;
+            
             const inputClass = "w-full bg-white/60 border border-gray-200 p-4 rounded-xl outline-none focus:border-purple-400 font-medium text-sm text-gray-900 transition-all focus:bg-white shadow-inner";
+            
             return (
                 <div className="max-w-4xl mx-auto px-6 py-8 space-y-12 pb-24 text-gray-900">
-                    <div className="text-center"><h2 className="text-4xl lg:text-6xl font-black uppercase mb-3">БРИФИНГ</h2><p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.4em]">Шаг 3: Сборка технического задания</p></div>
+                    <div className="text-center"><h2 className="text-4xl lg:text-6xl font-black uppercase mb-3 text-gray-900 tracking-tighter">БРИФИНГ</h2><p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.4em]">Шаг 3: Сборка технического задания</p></div>
                     <form onSubmit={e => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-8">
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase">01. Контакты</h3><div className="grid md:grid-cols-2 gap-5"><input required placeholder="ФИО / Компания *" className={inputClass} value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} /><input required placeholder="Город *" className={inputClass} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} /></div><input required placeholder="Telegram / WhatsApp *" className={inputClass} value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} /></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase">02. Тайминг</h3><DateRangePicker startDate={formData.dateFromObj} endDate={formData.dateToObj} onChange={(start, end) => setFormData({...formData, dateFromObj: start, dateToObj: end})} /></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase">03. Концепт</h3><textarea required placeholder="Опишите ваши идеи *" className={`${inputClass} h-32 resize-none`} value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} /><input placeholder="Ссылка на материалы" className={inputClass} value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} /></div>
-                        <div className="space-y-4"><h3 className="text-[10px] font-black text-purple-600 uppercase ml-2">04. Объемы</h3><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{['Десерты', 'Бар', 'Кухня', 'Прочее'].map(c => <div key={c} className="glass-card p-4 rounded-xl border flex flex-col gap-3 group hover:border-purple-300 transition-colors shadow-sm"><span className="text-[9px] font-black uppercase text-gray-400 truncate">{c}</span><div className="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100"><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-7 h-7 bg-white rounded flex items-center justify-center shadow-sm text-gray-500 hover:text-gray-900 transition-colors"><Icon name="minus" size={12} /></button><span className="font-black text-gray-900">{dishCounts[c]||0}</span><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-7 h-7 bg-purple-600 text-white rounded flex items-center justify-center shadow-sm hover:bg-purple-700 transition-colors"><Icon name="plus" size={12} /></button></div></div>)}</div></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><div className="flex justify-between items-center gap-4"><h3 className="text-[10px] font-black uppercase text-purple-600">05. Референсы ({selectedItems.length})</h3><div className="flex gap-2"><label className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase cursor-pointer flex items-center gap-2 hover:bg-purple-50 transition-colors"><Icon name="upload" size={12} className="text-purple-600"/> С устройства <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} /></label><button type="button" onClick={onAddMore} className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 hover:bg-purple-50 transition-colors"><Icon name="layout-grid" size={12} className="text-purple-600"/> Из базы</button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{selectedItems.map(item => <div key={item.id} className="bg-white/80 border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"><img src={item.image} className="w-10 h-10 rounded-lg object-cover bg-gray-50" /><p className="flex-1 text-xs font-black truncate uppercase tracking-tight text-gray-900">{item.title || 'Блюдо'}</p><button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="text-gray-400 hover:text-red-500 transition-colors"><Icon name="x" size={14} /></button></div>)}{selectedItems.length === 0 && <p className="text-[10px] font-black text-gray-300 uppercase text-center py-8 border-2 border-dashed border-gray-100 rounded-xl w-full col-span-full">Пусто</p>}</div></div>
-                        <button type="submit" disabled={sending} className="w-full btn-primary py-5 rounded-[1.5rem] font-black text-lg uppercase disabled:opacity-50 transition-all mt-2 active:scale-95 shadow-xl">{sending ? 'Отправка...' : 'Отправить ТЗ в работу'}</button>
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">01. Контакты</h3><div className="grid md:grid-cols-2 gap-5"><input required placeholder="ФИО / Компания *" className={inputClass} value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} /><input required placeholder="Город *" className={inputClass} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} /></div><input required placeholder="Telegram / WhatsApp *" className={inputClass} value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} /></div>
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">02. Тайминг</h3><DateRangePicker startDate={formData.dateFromObj} endDate={formData.dateToObj} onChange={(start, end) => setFormData({...formData, dateFromObj: start, dateToObj: end})} /></div>
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">03. Концепт</h3><textarea required placeholder="Опишите ваши идеи *" className={`${inputClass} h-32 resize-none`} value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} /><input placeholder="Ссылка на материалы" className={inputClass} value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} /></div>
+                        <div className="space-y-4"><h3 className="text-[10px] font-black text-purple-600 uppercase ml-2 tracking-widest">04. Объемы</h3><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{['Десерты', 'Бар', 'Кухня', 'Прочее'].map(c => <div key={c} className="glass-card p-4 rounded-xl border flex flex-col gap-3 group hover:border-purple-300 transition-colors shadow-sm"><span className="text-[9px] font-black uppercase text-gray-400 truncate tracking-widest">{c}</span><div className="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100"><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-7 h-7 bg-white rounded flex items-center justify-center shadow-sm text-gray-500 hover:text-gray-900 transition-colors"><Icon name="minus" size={12} /></button><span className="font-black text-gray-900">{dishCounts[c]||0}</span><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-7 h-7 bg-purple-600 text-white rounded flex items-center justify-center shadow-sm hover:bg-purple-700 transition-colors"><Icon name="plus" size={12} /></button></div></div>)}</div></div>
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <div className="flex justify-between items-center gap-4">
+                                <h3 className="text-[10px] font-black uppercase text-purple-600 tracking-widest">05. Референсы ({selectedItems.length})</h3>
+                                <div className="flex gap-2">
+                                    <label className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase cursor-pointer flex items-center gap-2 hover:bg-purple-50 transition-colors">
+                                        <Icon name="upload" size={12} className="text-purple-600"/> 
+                                        {uploadingStatus || "С устройства"} 
+                                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                    </label>
+                                    <button type="button" onClick={onAddMore} className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 hover:bg-purple-50 transition-colors"><Icon name="layout-grid" size={12} className="text-purple-600"/> Из базы</button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {selectedItems.map(item => (
+                                    <div key={item.id} className="bg-white/80 border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                                        <img src={item.image} className="w-10 h-10 rounded-lg object-cover bg-gray-50" />
+                                        <p className="flex-1 text-xs font-black truncate uppercase tracking-tight text-gray-900">{item.title || 'Блюдо'}</p>
+                                        <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="text-gray-400 hover:text-red-500 transition-colors"><Icon name="x" size={14} /></button>
+                                    </div>
+                                ))}
+                                {selectedItems.length === 0 && <p className="text-[10px] font-black text-gray-300 uppercase text-center py-8 border-2 border-dashed border-gray-100 rounded-xl w-full col-span-full tracking-widest">Пусто</p>}
+                            </div>
+                        </div>
+                        <button type="submit" disabled={sending} className="w-full btn-primary py-5 rounded-[1.5rem] font-black text-lg uppercase disabled:opacity-50 transition-all mt-2 active:scale-95 shadow-xl tracking-[0.2em]">{sending ? 'Отправка...' : 'Отправить ТЗ в работу'}</button>
                     </form>
                 </div>
             );
