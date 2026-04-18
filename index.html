@@ -35,7 +35,7 @@
             position: fixed;
             inset: 0;
             background-color: #e5e7eb; /* Заглушка, пока не загрузишь свои фото */
-            background-image: url('./bg-mobile.jpg'); /* <-- ФАЙЛ ДЛЯ ТЕЛЕФОНА */
+            background-image: url('bg-mobile.jpg'); /* <-- ФАЙЛ ДЛЯ ТЕЛЕФОНА */
             background-size: cover; 
             background-position: center;
             background-repeat: no-repeat;
@@ -52,7 +52,7 @@
         /* Светлая тема (Горизонталка для ПК) */
         @media (min-width: 1024px) {
             .bg-container {
-                background-image: url('./bg-desktop.jpg'); /* <-- ФАЙЛ ДЛЯ КОМПА */
+                background-image: url('bg-desktop.jpg'); /* <-- ФАЙЛ ДЛЯ КОМПА */
                 background-size: cover; 
                 background-position: center;
             }
@@ -262,13 +262,17 @@
             const [portfolioItems, setPortfolioItems] = useState([]);
             const [categories, setCategories] = useState([]);
             const [isLoadingData, setIsLoadingData] = useState(true);
-            const [dbError, setDbError] = useState(null); // Состояние для хранения текста ошибки БД
+            const [dbError, setDbError] = useState(null); 
             const [formData, setFormData] = useState({ 
                 fullName: '', city: '', contacts: '', concept: '', 
                 dateFromObj: null, dateToObj: null, 
                 menuLink: '', comment: '' 
             });
             const [dishCounts, setDishCounts] = useState({});
+
+            const [showAdminAuth, setShowAdminAuth] = useState(false);
+            const [adminPwd, setAdminPwd] = useState('');
+            const [adminPwdError, setAdminPwdError] = useState(false);
 
             const [fb, setFb] = useState(null);
             const [user, setUser] = useState(null);
@@ -337,9 +341,12 @@
                 
                 const unsub = fsMod.onSnapshot(portfolioRef, (snapshot) => {
                     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Сортировка по порядку (order) или по времени создания
+                    items.sort((a, b) => (a.order || 0) - (b.order || 0));
+
                     setPortfolioItems(items);
                     
-                    // Собираем уникальные категории, даже если они написаны через запятую
                     const allCats = new Set();
                     items.forEach(item => {
                         if (item.category) {
@@ -352,7 +359,7 @@
                     setCategories([...allCats]);
                     
                     setIsLoadingData(false);
-                    setDbError(null); // Очищаем ошибку если данные пришли
+                    setDbError(null); 
                     setTimeout(() => window.lucide && window.lucide.createIcons(), 100);
                 }, (error) => {
                     console.error("Firestore DB error:", error);
@@ -381,7 +388,6 @@
                 navigateTo('welcome');
             };
 
-            // Экран загрузки
             if (isLoadingData) {
                 return (
                     <div className="min-h-screen flex flex-col items-center justify-center">
@@ -391,7 +397,6 @@
                 );
             }
 
-            // Экран критической ошибки БД
             if (dbError) {
                 const projectId = fb?.auth?.app?.options?.projectId || "menubuild-c3fc6";
                 const rulesLink = `https://console.firebase.google.com/project/${projectId}/firestore/rules`;
@@ -473,12 +478,60 @@
 
                     {/* Секретный вход в админку */}
                     <button 
-                        onClick={() => navigateTo('admin')} 
+                        onClick={() => setShowAdminAuth(true)} 
                         className="fixed bottom-6 right-6 z-[100] p-3 rounded-full opacity-10 hover:opacity-100 hover:bg-white text-gray-500 hover:text-gray-900 hover:shadow-xl transition-all duration-300"
                         title="Управление"
                     >
                         <Icon name="home" size={24} />
                     </button>
+
+                    {/* Окно ввода пароля */}
+                    {showAdminAuth && (
+                        <div className="fixed inset-0 z-[200] bg-gray-900/40 backdrop-blur-md flex items-center justify-center p-4 modal-fade-in" onClick={() => {setShowAdminAuth(false); setAdminPwd(''); setAdminPwdError(false);}}>
+                            <div className="glass-card p-8 rounded-[2rem] w-full max-w-sm text-center relative border border-white/40 shadow-2xl" onClick={e => e.stopPropagation()}>
+                                <button onClick={() => {setShowAdminAuth(false); setAdminPwd(''); setAdminPwdError(false);}} className="absolute top-4 right-4 text-gray-400 hover:text-gray-900 transition-colors"><Icon name="x" size={20} /></button>
+                                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 text-purple-600 shadow-inner border border-purple-200">
+                                    <Icon name="lock" size={24} />
+                                </div>
+                                <h3 className="font-black text-xl uppercase tracking-widest mb-6 text-gray-900">Доступ закрыт</h3>
+                                <input 
+                                    type="password" 
+                                    autoFocus
+                                    placeholder="ПАРОЛЬ" 
+                                    className={`w-full bg-white/80 border ${adminPwdError ? 'border-red-500 text-red-500' : 'border-gray-200'} p-4 rounded-xl text-center font-black tracking-[0.5em] outline-none focus:border-purple-500 transition-colors mb-4`}
+                                    value={adminPwd}
+                                    onChange={e => {setAdminPwd(e.target.value); setAdminPwdError(false);}}
+                                    onKeyDown={e => {
+                                        if(e.key === 'Enter') {
+                                            if(adminPwd === '171819') {
+                                                setShowAdminAuth(false);
+                                                setAdminPwd('');
+                                                navigateTo('admin');
+                                            } else {
+                                                setAdminPwdError(true);
+                                                setAdminPwd('');
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    onClick={() => {
+                                        if(adminPwd === '171819') {
+                                            setShowAdminAuth(false);
+                                            setAdminPwd('');
+                                            navigateTo('admin');
+                                        } else {
+                                            setAdminPwdError(true);
+                                            setAdminPwd('');
+                                        }
+                                    }}
+                                    className="w-full btn-primary py-4 rounded-xl font-black text-sm uppercase tracking-widest active:scale-95 transition-transform"
+                                >
+                                    Войти
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -489,8 +542,9 @@
             const [imagePreview, setImagePreview] = useState("");
             const [statusMsg, setStatusMsg] = useState("");
             const [deletingId, setDeletingId] = useState(null);
+            const [editingId, setEditingId] = useState(null);
 
-            // Умный сжиматель фоток перед отправкой в базу
+            // Сжиматель
             const compressImage = (file) => {
                 return new Promise((resolve) => {
                     const reader = new FileReader();
@@ -500,7 +554,7 @@
                             const canvas = document.createElement('canvas');
                             let width = img.width;
                             let height = img.height;
-                            const maxDim = 800; // Оптимальный размер для веба, чтобы база не лопнула
+                            const maxDim = 800; 
                             
                             if (width > height && width > maxDim) {
                                 height *= maxDim / width;
@@ -514,7 +568,6 @@
                             canvas.height = height;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
-                            // Возвращаем облегченный код картинки
                             resolve(canvas.toDataURL('image/jpeg', 0.8)); 
                         };
                         img.src = e.target.result;
@@ -531,34 +584,69 @@
                 }
             };
 
-            const handleAdd = async (e) => {
+            const handleEditClick = (item) => {
+                setEditingId(item.id);
+                setNewItem({ 
+                    category: item.category || '', 
+                    title: item.title || '', 
+                    description: item.description || '' 
+                });
+                setImagePreview(item.image);
+                setImageFile(null); // Если не зальют новое фото, оставим старое из превью
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const cancelEdit = () => {
+                setEditingId(null);
+                setNewItem({ category: '', title: '', description: '' });
+                setImagePreview("");
+                setImageFile(null);
+            };
+
+            const handleAddOrEdit = async (e) => {
                 e.preventDefault();
                 if (!fb) return;
-                if (!imageFile) {
+                
+                // Если не выбрали файл и не редактируем существующее — блочим
+                if (!imageFile && !editingId) {
                     setStatusMsg("Загрузи фото!");
                     return;
                 }
 
-                setStatusMsg("Сжимаем и сохраняем...");
+                setStatusMsg(editingId ? "Сохраняем изменения..." : "Сжимаем и сохраняем...");
                 const { db, fsMod } = fb;
                 try {
-                    const finalImageStr = await compressImage(imageFile);
+                    let finalImageStr = imagePreview; // Берем старое фото по умолчанию
+                    if (imageFile) {
+                        finalImageStr = await compressImage(imageFile); // Если загрузили новое — жмем его
+                    }
+
+                    if (editingId) {
+                        await fsMod.updateDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', editingId), {
+                            category: newItem.category,
+                            title: newItem.title,
+                            description: newItem.description,
+                            image: finalImageStr
+                        });
+                        setStatusMsg("Изменения сохранены!");
+                    } else {
+                        // Рассчитываем порядок для новой карточки (добавляем в конец)
+                        const newOrder = portfolioItems.length > 0 ? Math.max(...portfolioItems.map(i => i.order || 0)) + 1 : 0;
+                        await fsMod.addDoc(fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'portfolio'), {
+                            category: newItem.category,
+                            title: newItem.title,
+                            description: newItem.description,
+                            image: finalImageStr,
+                            order: newOrder
+                        });
+                        setStatusMsg("Успешно добавлено!");
+                    }
                     
-                    await fsMod.addDoc(fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'portfolio'), {
-                        category: newItem.category,
-                        title: newItem.title,
-                        description: newItem.description,
-                        image: finalImageStr
-                    });
-                    
-                    setNewItem({ category: '', title: '', description: '' });
-                    setImageFile(null);
-                    setImagePreview("");
-                    setStatusMsg("Успешно добавлено!");
                     setTimeout(() => setStatusMsg(""), 3000);
+                    cancelEdit();
                 } catch (err) { 
                     console.error(err); 
-                    setStatusMsg("Ошибка при добавлении"); 
+                    setStatusMsg("Произошла ошибка"); 
                 }
             };
 
@@ -568,9 +656,45 @@
                 try {
                     await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', id));
                     setDeletingId(null);
+                    if (editingId === id) cancelEdit();
                 } catch (err) { 
                     console.error(err); 
                     setStatusMsg("Ошибка при удалении");
+                }
+            };
+
+            const moveItem = async (index, direction) => {
+                if (!fb) return;
+                const targetIndex = index + direction;
+                if (targetIndex < 0 || targetIndex >= portfolioItems.length) return; // Выход за границы
+
+                const { db, fsMod } = fb;
+                setStatusMsg("Меняем порядок...");
+                
+                // Проверка: если у элементов еще нет поля order (старые записи), прописываем всем
+                const needsInit = portfolioItems.some(i => typeof i.order !== 'number');
+                if (needsInit) {
+                    const updates = portfolioItems.map((item, idx) => 
+                        fsMod.updateDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', item.id), { order: idx })
+                    );
+                    await Promise.all(updates);
+                    setStatusMsg("Лента инициализирована. Нажми стрелочку еще раз.");
+                    return;
+                }
+
+                const currentItem = portfolioItems[index];
+                const swapItem = portfolioItems[targetIndex];
+
+                try {
+                    // Меняем значения order местами
+                    await Promise.all([
+                        fsMod.updateDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', currentItem.id), { order: swapItem.order }),
+                        fsMod.updateDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', swapItem.id), { order: currentItem.order })
+                    ]);
+                    setStatusMsg("");
+                } catch (err) {
+                    console.error(err);
+                    setStatusMsg("Ошибка сортировки");
                 }
             };
 
@@ -586,7 +710,7 @@
                     let count = 0;
                     for (const item of items) {
                         const { id, ...data } = item;
-                        await fsMod.addDoc(portfolioRef, data);
+                        await fsMod.addDoc(portfolioRef, { ...data, order: count });
                         count++;
                     }
                     setStatusMsg(`Миграция завершена! Перенесено: ${count}`);
@@ -601,11 +725,18 @@
                 <div className="max-w-4xl mx-auto px-6 py-12 space-y-12 pb-32">
                     <div className="text-center">
                         <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 text-gray-900">УПРАВЛЕНИЕ</h2>
-                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Наполнение базы референсов</p>
+                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Настройка ленты и контента</p>
                     </div>
 
-                    <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
-                        <form onSubmit={handleAdd} className="space-y-6">
+                    <div className={`glass-card p-6 lg:p-10 rounded-[2rem] space-y-6 transition-all ${editingId ? 'ring-4 ring-purple-500/20 shadow-xl' : ''}`}>
+                        <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-4">
+                            <h3 className="font-black uppercase tracking-widest text-gray-900 flex items-center gap-2">
+                                {editingId ? <><Icon name="pencil" className="text-purple-600"/> Редактирование карточки</> : <><Icon name="plus" className="text-purple-600"/> Добавить новую</>}
+                            </h3>
+                            {editingId && <button onClick={cancelEdit} className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Отменить</button>}
+                        </div>
+
+                        <form onSubmit={handleAddOrEdit} className="space-y-6">
                             <div className="grid md:grid-cols-2 gap-4">
                                 <input placeholder="Категории (через запятую: Десерты, Бар)" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
                                 <input placeholder="Название (необязательно)" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
@@ -616,13 +747,13 @@
                                     <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                     <Icon name="upload" className="text-gray-400 group-hover:text-purple-600 mb-2 transition-colors" size={24} />
                                     <span className="text-xs font-bold text-gray-500 group-hover:text-purple-700 uppercase tracking-widest transition-colors">
-                                        {imageFile ? imageFile.name : "Выбрать фото с устройства"}
+                                        {imageFile ? imageFile.name : (editingId ? "Выбрать другое фото" : "Выбрать фото с устройства")}
                                     </span>
                                 </label>
                                 {imagePreview && (
                                     <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group">
                                         <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
-                                        <button type="button" onClick={() => {setImageFile(null); setImagePreview("");}} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="x" size={12} /></button>
+                                        {imageFile && <button type="button" onClick={(e) => {e.preventDefault(); setImageFile(null); if(!editingId) setImagePreview("");}} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="x" size={12} /></button>}
                                     </div>
                                 )}
                             </div>
@@ -630,7 +761,9 @@
                             <textarea placeholder="Описание" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors h-24 resize-none" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
                             
                             <div className="flex items-center gap-4">
-                                <button type="submit" disabled={!imageFile} className="btn-primary px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest disabled:opacity-50">Добавить в базу</button>
+                                <button type="submit" disabled={!imageFile && !editingId} className="btn-primary px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest disabled:opacity-50">
+                                    {editingId ? "Сохранить изменения" : "Добавить в базу"}
+                                </button>
                                 {statusMsg && <span className="text-xs font-bold text-gray-600 uppercase tracking-wider bg-white/80 px-3 py-1.5 rounded-lg border border-gray-100">{statusMsg}</span>}
                             </div>
                         </form>
@@ -638,7 +771,7 @@
 
                     <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <h3 className="font-black uppercase tracking-widest text-gray-900">Текущие элементы ({portfolioItems.length})</h3>
+                            <h3 className="font-black uppercase tracking-widest text-gray-900">Лента портфолио ({portfolioItems.length})</h3>
                             {portfolioItems.length === 0 && (
                                 <button onClick={importFromCSV} className="btn-secondary px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-50 transition-colors">
                                     Мигрировать из Google Таблиц
@@ -647,24 +780,38 @@
                         </div>
                         
                         <div className="space-y-3">
-                            {portfolioItems.map(item => (
-                                <div key={item.id} className="flex items-center gap-4 bg-white/80 p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                            {portfolioItems.map((item, index) => (
+                                <div key={item.id} className={`flex items-center gap-3 lg:gap-4 bg-white/80 p-3 rounded-xl border ${editingId === item.id ? 'border-purple-400 shadow-md' : 'border-gray-100 shadow-sm hover:shadow-md'} transition-all`}>
+                                    
+                                    {/* Кнопки перемещения */}
+                                    <div className="flex flex-col gap-1">
+                                        <button onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors p-0.5"><Icon name="chevron-up" size={16} /></button>
+                                        <button onClick={() => moveItem(index, 1)} disabled={index === portfolioItems.length - 1} className="text-gray-300 hover:text-gray-900 disabled:opacity-20 transition-colors p-0.5"><Icon name="chevron-down" size={16} /></button>
+                                    </div>
+
                                     <img src={item.image} alt={item.title || 'Фото'} className="w-12 h-12 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
+                                    
+                                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => handleEditClick(item)}>
                                         <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest truncate">{item.category || 'Без категории'}</p>
                                         <p className="text-sm font-bold text-gray-900 truncate">{item.title || 'Без названия'}</p>
                                     </div>
                                     
-                                    {deletingId === item.id ? (
-                                        <div className="flex items-center gap-2 pr-2 animate-in fade-in slide-in-from-right-4">
-                                            <button onClick={() => handleDelete(item.id)} className="text-[10px] bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-black uppercase tracking-wider transition-colors shadow-sm">Удалить</button>
-                                            <button onClick={() => setDeletingId(null)} className="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-black uppercase tracking-wider transition-colors">Отмена</button>
-                                        </div>
-                                    ) : (
-                                        <button onClick={() => setDeletingId(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Удалить">
-                                            <Icon name="trash" size={18} />
+                                    <div className="flex items-center gap-1 sm:gap-2">
+                                        <button onClick={() => handleEditClick(item)} className={`p-2 rounded-lg transition-colors ${editingId === item.id ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-purple-600 hover:bg-purple-50'}`} title="Редактировать">
+                                            <Icon name="pencil" size={18} />
                                         </button>
-                                    )}
+
+                                        {deletingId === item.id ? (
+                                            <div className="flex items-center gap-1 lg:gap-2 animate-in fade-in slide-in-from-right-4">
+                                                <button onClick={() => handleDelete(item.id)} className="text-[10px] bg-red-500 hover:bg-red-600 text-white px-2 py-2 lg:px-3 rounded-lg font-black uppercase tracking-wider transition-colors shadow-sm">Удалить</button>
+                                                <button onClick={() => setDeletingId(null)} className="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-2 lg:px-3 rounded-lg font-black uppercase tracking-wider transition-colors">Отмена</button>
+                                            </div>
+                                        ) : (
+                                            <button onClick={() => setDeletingId(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Удалить">
+                                                <Icon name="trash" size={18} />
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             ))}
                             {portfolioItems.length === 0 && <p className="text-sm text-gray-500 text-center py-6">База пуста. Добавьте новые элементы.</p>}
