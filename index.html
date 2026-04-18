@@ -9,22 +9,6 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Настройка Tailwind для поддержки Dark Mode через класс -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        accent: {
-                            light: '#7e22ce',
-                            dark: '#c084fc'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -32,87 +16,64 @@
         
         :root {
             --accent-light: #7e22ce; 
-            --accent-dark: #c084fc;
         }
 
-        /* Фикс для мобилок: красим подложку оверскролла */
-        html { background-color: #f9fafb; transition: background-color 0.3s; }
-        html.dark { background-color: #050505; }
+        html { background-color: #f9fafb; }
 
         body { 
             font-family: 'Inter', sans-serif; 
             margin: 0; 
             overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s;
+            background-color: transparent;
+            color: #111827;
         }
 
         /* ================= ФОНЫ ================= */
         
-        /* 1. Светлая тема (Вертикалка по умолчанию) */
+        /* Светлая тема (Мобилка по умолчанию) */
         .bg-container {
             position: fixed;
             inset: 0;
-            background-image: url('https://www.image2url.com/r2/default/images/1776484199128-c717534b-67b3-4f1f-9dde-49185e5d8083.jfif');
-            /* Изменили cover на 100% 100% чтобы показать всю картинку без обрезки */
-            background-size: 100% 100%;
+            background-image: url('https://www.image2url.com/r2/default/images/1776511010980-24ecdd2c-e68a-4a32-8f80-4a38018b3f75.jpg');
+            background-size: cover; /* Идеальные пропорции без растягивания */
             background-position: center;
             background-repeat: no-repeat;
             z-index: -2;
-            transition: background-image 0.5s ease-in-out;
-            filter: opacity(0.8) contrast(1.1);
         }
+        
         .bg-overlay {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle at top center, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.95) 100%);
+            background: rgba(255, 255, 255, 0.2); /* Легкая пелена, чтобы мрамор читался везде */
             z-index: -1;
-            transition: background 0.5s;
         }
 
         /* Светлая тема (Горизонталка для ПК) */
         @media (min-width: 1024px) {
             .bg-container {
-                background-image: url('https://www.image2url.com/r2/default/images/1776484991673-94b7d8b9-f7b5-4b58-9c87-fcd0ab419eac.jfif');
+                background-image: url('https://www.image2url.com/r2/default/images/1776511048415-eaa30f0e-94cb-48a9-b53a-6df55172bd6f.jpg');
+                background-size: cover; 
+                background-position: center;
+            }
+            .bg-overlay {
+                background: rgba(255, 255, 255, 0.2);
             }
         }
-
-        /* 2. Темная тема (Вертикалка) */
-        html.dark .bg-container {
-            background-image: url('https://www.image2url.com/r2/default/images/1776484935477-a75d1cfe-e42f-4fd4-9041-00adfdf9eb64.jfif');
-            filter: brightness(0.6) contrast(1.2);
-        }
-        html.dark .bg-overlay {
-            background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.9) 100%);
-        }
-
-        /* Темная тема (Горизонталка для ПК) */
-        @media (min-width: 1024px) {
-            html.dark .bg-container {
-                background-image: url('https://www.image2url.com/r2/default/images/1776485052004-8f95f166-257a-4532-8317-96f5e10d9d57.jfif');
-            }
-        }
-
 
         /* ================= ЭЛЕМЕНТЫ УПРАВЛЕНИЯ ================= */
         
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         .text-glow { text-shadow: 0 10px 30px rgba(126, 34, 206, 0.15); }
-        html.dark .text-glow { text-shadow: 0 0 20px rgba(168, 85, 247, 0.6); }
         
-        /* Стеклянные панели (Адаптив) */
+        /* Стеклянные панели */
         .glass-card {
-            background: rgba(255, 255, 255, 0.75);
+            background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
             transition: all 0.3s;
-        }
-        html.dark .glass-card {
-            background: rgba(17, 17, 17, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
         /* Кнопка Primary */
@@ -126,14 +87,6 @@
             transform: translateY(-2px);
             box-shadow: 0 15px 35px -5px rgba(126, 34, 206, 0.5);
         }
-        html.dark .btn-primary {
-            background: linear-gradient(135deg, var(--accent-dark) 0%, #7c3aed 100%);
-            box-shadow: 0 10px 20px -10px rgba(168, 85, 247, 0.5);
-            color: black;
-        }
-        html.dark .btn-primary:hover {
-            box-shadow: 0 15px 30px -10px rgba(168, 85, 247, 0.7);
-        }
 
         /* Кнопка Secondary */
         .btn-secondary {
@@ -146,14 +99,6 @@
             background: rgba(0, 0, 0, 0.06);
             border-color: rgba(0, 0, 0, 0.15);
         }
-        html.dark .btn-secondary {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        html.dark .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
 
         /* Календарь */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
@@ -162,11 +107,6 @@
         .day-selected { background: var(--accent-light) !important; color: white !important; font-weight: bold; box-shadow: 0 4px 15px rgba(126, 34, 206, 0.4); }
         .day-in-range { background-color: rgba(126, 34, 206, 0.08); border-radius: 0; }
         .day-today { border: 1px solid var(--accent-light); color: var(--accent-light); }
-        
-        html.dark .calendar-day:hover:not(.empty) { background-color: rgba(192, 132, 252, 0.2); }
-        html.dark .day-selected { background: var(--accent-dark) !important; color: black !important; box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4); }
-        html.dark .day-in-range { background-color: rgba(192, 132, 252, 0.15); }
-        html.dark .day-today { border: 1px solid var(--accent-dark); color: var(--accent-dark); }
 
         .modal-fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn {
@@ -181,14 +121,11 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.3); }
-        html.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); }
-        html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
         input:focus, textarea:focus { box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.1); }
-        html.dark input:focus, html.dark textarea:focus { box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.2); }
     </style>
 </head>
-<body className="bg-gray-50 text-gray-900 dark:bg-[#050505] dark:text-white transition-colors duration-500">
+<body>
     <div class="bg-container"></div>
     <div class="bg-overlay"></div>
     <div id="root"></div>
@@ -273,19 +210,19 @@
             return (
                 <div className="glass-card rounded-[2.5rem] p-8 select-none">
                     <div className="flex justify-between items-center mb-6">
-                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white rounded-xl transition-colors">
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors">
                             <Icon name="chevron-left" />
                         </button>
-                        <h4 className="font-black uppercase tracking-widest text-sm text-purple-700 dark:text-purple-400">
+                        <h4 className="font-black uppercase tracking-widest text-sm text-purple-700">
                             {months[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                         </h4>
-                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white rounded-xl transition-colors">
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors">
                             <Icon name="chevron-right" />
                         </button>
                     </div>
                     <div className="calendar-grid mb-2">
                         {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(d => (
-                            <div key={d} className="text-[10px] font-black text-gray-400 dark:text-white/30 text-center py-2 uppercase tracking-widest">{d}</div>
+                            <div key={d} className="text-[10px] font-black text-gray-400 text-center py-2 uppercase tracking-widest">{d}</div>
                         ))}
                     </div>
                     <div className="calendar-grid gap-1">
@@ -300,7 +237,7 @@
                                 <div 
                                     key={i} 
                                     onClick={() => handleDateClick(date)}
-                                    className={`calendar-day ${!date ? 'empty' : 'text-gray-800 dark:text-white'} 
+                                    className={`calendar-day ${!date ? 'empty' : 'text-gray-800'} 
                                         ${selected ? 'day-selected' : ''} 
                                         ${inRange ? 'day-in-range' : ''}
                                         ${start && endDate ? 'rounded-r-none' : ''}
@@ -318,9 +255,6 @@
         };
 
         function App() {
-            const [theme, setTheme] = useState(() => {
-                return localStorage.getItem('theme') || 'dark'; // Темная тема по умолчанию
-            });
             const [activeTab, setActiveTab] = useState('welcome');
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
             const [selectedItems, setSelectedItems] = useState([]);
@@ -333,18 +267,6 @@
                 menuLink: '', comment: '' 
             });
             const [dishCounts, setDishCounts] = useState({});
-
-            // Управление темой
-            useEffect(() => {
-                if (theme === 'dark') {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
-                localStorage.setItem('theme', theme);
-            }, [theme]);
-
-            const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
             useEffect(() => {
                 const fetchData = async () => {
@@ -368,7 +290,7 @@
                 fetchData();
             }, []);
 
-            useEffect(() => { lucide.createIcons(); }, [activeTab, isLoadingData, mobileMenuOpen, theme]);
+            useEffect(() => { lucide.createIcons(); }, [activeTab, isLoadingData, mobileMenuOpen]);
 
             const navigateTo = (tab) => {
                 setActiveTab(tab);
@@ -386,42 +308,36 @@
             if (isLoadingData) {
                 return (
                     <div className="min-h-screen flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 border-4 border-purple-200 dark:border-white/10 border-t-purple-600 dark:border-t-purple-500 rounded-full animate-spin mb-6"></div>
-                        <h2 className="text-xl font-black uppercase tracking-[0.5em] text-gray-400 dark:text-white/30 animate-pulse">Tastelab</h2>
+                        <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-6"></div>
+                        <h2 className="text-xl font-black uppercase tracking-[0.5em] text-gray-400 animate-pulse">Tastelab</h2>
                     </div>
                 );
             }
 
             return (
-                <div className="min-h-screen relative text-gray-900 dark:text-white">
-                    <nav className="fixed w-full z-50 bg-white/70 dark:bg-black/60 backdrop-blur-2xl border-b border-gray-200 dark:border-white/5 transition-colors">
+                <div className="min-h-screen relative text-gray-900">
+                    <nav className="fixed w-full z-50 bg-white/70 backdrop-blur-2xl border-b border-gray-200 transition-colors">
                         <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
                             <div className="text-3xl font-black tracking-tighter cursor-pointer group" onClick={() => navigateTo('welcome')}>
-                                TASTE<span className="text-purple-600 dark:text-purple-500 group-hover:text-purple-800 dark:group-hover:text-purple-400 transition-colors">LAB</span>
+                                TASTE<span className="text-purple-600 group-hover:text-purple-800 transition-colors">LAB</span>
                             </div>
                             <div className="hidden md:flex space-x-10 items-center">
-                                <button onClick={() => navigateTo('welcome')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'welcome' ? 'text-purple-700 dark:text-purple-400' : 'text-gray-500 hover:text-gray-900 dark:text-white/50 dark:hover:text-white'}`}>О нас</button>
-                                <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'portfolio' ? 'text-purple-700 dark:text-purple-400' : 'text-gray-500 hover:text-gray-900 dark:text-white/50 dark:hover:text-white'}`}>Портфолио</button>
+                                <button onClick={() => navigateTo('welcome')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'welcome' ? 'text-purple-700' : 'text-gray-500 hover:text-gray-900'}`}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'portfolio' ? 'text-purple-700' : 'text-gray-500 hover:text-gray-900'}`}>Портфолио</button>
                                 <button onClick={() => navigateTo('brief')} className="btn-primary px-8 py-3 rounded-full text-sm font-black uppercase tracking-widest flex items-center gap-3 active:scale-95">
-                                    Составить ТЗ {selectedItems.length > 0 && <span className="bg-white text-purple-700 dark:text-black px-2.5 py-0.5 rounded-full text-[10px]">{selectedItems.length}</span>}
-                                </button>
-                                <button onClick={toggleTheme} className="p-2 ml-4 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white/80 transition-colors">
-                                    <Icon name={theme === 'light' ? 'moon' : 'sun'} size={20} />
+                                    Составить ТЗ {selectedItems.length > 0 && <span className="bg-white text-purple-700 px-2.5 py-0.5 rounded-full text-[10px]">{selectedItems.length}</span>}
                                 </button>
                             </div>
                             <div className="flex items-center gap-4 md:hidden">
-                                <button onClick={toggleTheme} className="p-2 rounded-full bg-gray-100 text-gray-600 dark:bg-white/10 dark:text-white/80 transition-colors">
-                                    <Icon name={theme === 'light' ? 'moon' : 'sun'} size={20} />
-                                </button>
-                                <button className="text-gray-600 dark:text-white/80 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                <button className="text-gray-600 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                                     <Icon name={mobileMenuOpen ? "x" : "menu"} size={32} />
                                 </button>
                             </div>
                         </div>
                         {mobileMenuOpen && (
-                            <div className="md:hidden glass-card border-b border-gray-200 dark:border-white/10 p-5 space-y-3 modal-fade-in mx-4 mt-2 rounded-[1.5rem]">
-                                <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'welcome' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500 dark:text-white' : 'bg-gray-50 text-gray-600 dark:bg-white/5 dark:text-white/50'}`}>О нас</button>
-                                <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'portfolio' ? 'bg-purple-100 text-purple-700 dark:bg-purple-500 dark:text-white' : 'bg-gray-50 text-gray-600 dark:bg-white/5 dark:text-white/50'}`}>Портфолио</button>
+                            <div className="md:hidden glass-card border-b border-gray-200 p-5 space-y-3 modal-fade-in mx-4 mt-2 rounded-[1.5rem]">
+                                <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'welcome' ? 'bg-purple-100 text-purple-700' : 'bg-gray-50 text-gray-600'}`}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'portfolio' ? 'bg-purple-100 text-purple-700' : 'bg-gray-50 text-gray-600'}`}>Портфолио</button>
                                 <button onClick={() => navigateTo('brief')} className="block w-full btn-primary text-center py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-xl">Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}</button>
                             </div>
                         )}
@@ -439,11 +355,13 @@
         const WelcomePage = ({ onNext }) => (
             <div className="max-w-5xl mx-auto px-6 py-12 lg:py-24 flex flex-col items-center justify-center text-center min-h-[60vh]">
                 <div className="space-y-8">
-                    <h1 className="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-gray-900 dark:text-white">
-                        ЛАБОРАТОРИЯ <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 dark:from-purple-400 dark:to-purple-600 text-glow">ХИТОВ</span>
-                    </h1>
-                    <p className="text-lg lg:text-xl text-gray-500 dark:text-white/40 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-tighter">
+                    <div className="flex flex-col items-center">
+                        <h1 className="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter text-gray-900">
+                            ЛАБОРАТОРИЯ <br/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 text-glow">ХИТОВ</span>
+                        </h1>
+                    </div>
+                    <p className="text-lg lg:text-xl text-gray-500 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-tighter">
                         Проектируем гастрономические смыслы. <br className="hidden md:block"/> От идеи до идеальной подачи.
                     </p>
                     <div className="flex justify-center pt-6">
@@ -499,17 +417,17 @@
                 <div className="max-w-7xl mx-auto px-6 py-12 lg:py-16">
                     <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-10 mb-16">
                         <div>
-                            <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter mb-4 text-gray-900 dark:text-white">БАЗА <span className="text-purple-600 dark:text-purple-500">РЕФЕРЕНСОВ</span></h2>
-                            <p className="text-gray-500 dark:text-white/40 font-bold uppercase text-xs tracking-[0.4em]">Архив для вашего вдохновения</p>
+                            <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter mb-4 text-gray-900">БАЗА <span className="text-purple-600">РЕФЕРЕНСОВ</span></h2>
+                            <p className="text-gray-500 font-bold uppercase text-xs tracking-[0.4em]">Архив для вашего вдохновения</p>
                         </div>
                         <div className="flex flex-wrap gap-3">
                             {['Все', ...categories].map(c => (
-                                <button key={c} onClick={() => setCat(c)} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${cat === c ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30' : 'bg-white dark:bg-white/5 border border-gray-200 dark:border-transparent text-gray-500 dark:text-white/40 hover:bg-gray-50 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white'}`}>{c}</button>
+                                <button key={c} onClick={() => setCat(c)} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${cat === c ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}>{c}</button>
                             ))}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-10">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
                         {filtered.map(i => {
                             const active = selectedItems.find(x => x.id === i.id);
                             const hasText = i.title || i.description;
@@ -518,24 +436,25 @@
                                 <div 
                                     key={i.id} 
                                     onClick={() => setPreviewItem(i)}
-                                    className={`group relative aspect-square rounded-2xl sm:rounded-[2.5rem] overflow-hidden border transition-all duration-500 cursor-zoom-in bg-gray-100 dark:bg-black/40 ${active ? 'border-purple-500 ring-4 sm:ring-8 ring-purple-500/10 shadow-xl' : 'border-gray-200 dark:border-white/5 hover:shadow-md dark:hover:border-white/20 hover:-translate-y-1'}`}
+                                    className={`group relative aspect-square rounded-3xl sm:rounded-[2.5rem] overflow-hidden border transition-all duration-500 cursor-zoom-in bg-gray-100 ${active ? 'border-purple-500 ring-4 sm:ring-8 ring-purple-500/10 shadow-xl' : 'border-gray-200 hover:shadow-md hover:-translate-y-1'}`}
                                 >
-                                    <img src={i.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=800'} className="w-full h-full object-cover opacity-90 dark:opacity-60 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-105" />
+                                    <img src={i.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=800'} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-105" />
                                     
-                                    <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-2 sm:p-8 transition-opacity duration-500 ${hasText ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5 sm:p-8 transition-opacity duration-500 ${hasText ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                         {hasText && (
-                                            <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500 hidden sm:block">
-                                                {i.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-300 dark:text-purple-400 uppercase tracking-[0.4em] mb-3 block">{i.category}</span>}
-                                                {i.title && <h3 className="font-black text-2xl lg:text-3xl text-white uppercase leading-none mb-3 tracking-tighter">{i.title}</h3>}
-                                                {i.description && <p className="text-sm text-gray-300 dark:text-white/60 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 font-medium">{i.description}</p>}
+                                            <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                                {i.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.4em] mb-2 sm:mb-3 block">{i.category}</span>}
+                                                {i.title && <h3 className="font-black text-xl sm:text-2xl lg:text-3xl text-white uppercase leading-none mb-2 sm:mb-3 tracking-tighter">{i.title}</h3>}
+                                                {i.description && <p className="text-xs sm:text-sm text-gray-300 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 font-medium">{i.description}</p>}
                                             </div>
                                         )}
                                         
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); toggle(i); }} 
-                                            className={`mt-auto sm:mt-6 w-8 h-8 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-lg self-end ${active ? 'bg-purple-600 text-white dark:bg-purple-500' : 'bg-white/20 backdrop-blur-md text-white hover:bg-white hover:text-gray-900 dark:bg-white/10 dark:hover:bg-purple-600 dark:hover:text-white'}`}
+                                            className={`mt-4 sm:mt-6 px-4 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg self-start sm:self-end ${active ? 'bg-purple-600 text-white' : 'bg-white/40 backdrop-blur-md text-gray-900 hover:bg-white hover:text-purple-600'}`}
                                         >
-                                            <Icon name={active ? 'check' : 'plus'} className="!w-4 !h-4 sm:!w-7 sm:!h-7" />
+                                            <Icon name={active ? 'check' : 'plus'} className="w-4 h-4 sm:w-5 sm:h-5" />
+                                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">{active ? 'В брифе' : 'Добавить в бриф'}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -545,53 +464,57 @@
 
                     {previewItem && (
                         <div 
-                            className="fixed inset-0 z-[100] bg-gray-50 dark:bg-[#050505] lg:bg-white/20 lg:dark:bg-black/40 lg:backdrop-blur-xl flex items-center justify-center p-6 lg:p-20 cursor-zoom-out no-select"
+                            className="fixed inset-0 z-[100] bg-gray-50/90 lg:bg-white/20 lg:backdrop-blur-xl flex items-center justify-center p-4 lg:p-20 cursor-zoom-out no-select"
                             onClick={() => setPreviewItem(null)}
                             onTouchStart={handleTouchStart}
                             onTouchEnd={handleTouchEnd}
                         >
-                            <button className="absolute top-8 right-8 lg:top-10 lg:right-10 text-gray-400 hover:text-gray-900 dark:text-white/30 dark:hover:text-white transition-colors z-[130]">
-                                <Icon name="x" size={40} />
-                            </button>
-                            
                             <button 
                                 onClick={(e) => { e.stopPropagation(); showPrev(); }}
-                                className="hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white dark:bg-white/5 shadow-lg border border-gray-200 dark:border-white/5 text-gray-500 hover:text-gray-900 dark:text-white/50 dark:hover:text-white items-center justify-center transition-all active:scale-90"
+                                className="hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 items-center justify-center transition-all active:scale-90"
                             >
                                 <Icon name="chevron-left" size={40} />
                             </button>
                             <button 
                                 onClick={(e) => { e.stopPropagation(); showNext(); }}
-                                className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white dark:bg-white/5 shadow-lg border border-gray-200 dark:border-white/5 text-gray-500 hover:text-gray-900 dark:text-white/50 dark:hover:text-white items-center justify-center transition-all active:scale-90"
+                                className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 items-center justify-center transition-all active:scale-90"
                             >
                                 <Icon name="chevron-right" size={40} />
                             </button>
 
                             <div className="max-w-6xl w-full h-full flex flex-col items-center justify-center modal-fade-in relative z-[110]" onClick={e => e.stopPropagation()}>
-                                <img 
-                                    src={previewItem.image} 
-                                    className="max-h-[70vh] w-auto rounded-[2rem] shadow-2xl border border-gray-200 dark:border-white/10 object-contain cursor-zoom-out" 
-                                    alt={previewItem.title}
-                                    onClick={() => setPreviewItem(null)}
-                                />
+                                <div className="relative inline-block">
+                                    <img 
+                                        src={previewItem.image} 
+                                        className="max-h-[65vh] lg:max-h-[70vh] w-auto rounded-3xl lg:rounded-[2rem] shadow-2xl border border-gray-200 object-contain cursor-zoom-out" 
+                                        alt={previewItem.title}
+                                        onClick={() => setPreviewItem(null)}
+                                    />
+                                    <button 
+                                        onClick={() => setPreviewItem(null)}
+                                        className="absolute top-3 right-3 lg:top-5 lg:right-5 bg-black/70 backdrop-blur-md p-2 lg:p-3 rounded-full text-white hover:bg-black transition-all z-[130] shadow-xl"
+                                    >
+                                        <Icon name="x" className="w-4 h-4 lg:w-6 lg:h-6" />
+                                    </button>
+                                </div>
                                 {(previewItem.title || previewItem.category !== 'Прочее') && (
-                                    <div className="mt-10 text-center max-w-3xl px-6">
-                                        {previewItem.category !== 'Прочее' && <span className="text-xs font-black text-purple-600 dark:text-purple-500 uppercase tracking-[0.5em] mb-3 block">{previewItem.category}</span>}
-                                        <h2 className="text-3xl lg:text-5xl font-black text-gray-900 dark:text-white uppercase mb-4 tracking-tighter leading-none">{previewItem.title}</h2>
-                                        <p className="text-gray-500 dark:text-gray-400 text-lg font-medium leading-relaxed">{previewItem.description}</p>
+                                    <div className="mt-8 lg:mt-10 text-center max-w-3xl px-4 lg:px-6">
+                                        {previewItem.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.5em] mb-2 lg:mb-3 block">{previewItem.category}</span>}
+                                        <h2 className="text-2xl lg:text-5xl font-black text-gray-900 uppercase mb-3 lg:mb-4 tracking-tighter leading-none">{previewItem.title}</h2>
+                                        <p className="text-gray-500 text-sm lg:text-lg font-medium leading-relaxed">{previewItem.description}</p>
                                     </div>
                                 )}
-                                <div className="mt-8 text-xs font-black text-gray-300 dark:text-white/20 uppercase tracking-[0.5em]">
+                                <div className="mt-6 lg:mt-8 text-[10px] lg:text-xs font-black text-gray-400 uppercase tracking-[0.5em]">
                                     {currentIndex + 1} / {filtered.length}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <div className="mt-32 text-center p-16 glass-card rounded-[3rem] relative overflow-hidden group">
+                    <div className="mt-24 lg:mt-32 text-center p-12 lg:p-16 glass-card rounded-[2.5rem] lg:rounded-[3rem] relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <h3 className="text-3xl lg:text-5xl font-black mb-10 text-gray-900 dark:text-white uppercase tracking-tighter relative z-10">Построим ваш проект вместе?</h3>
-                        <button onClick={onNext} className="btn-primary px-16 py-5 rounded-full font-black uppercase tracking-[0.2em] relative z-10">Начать бриф</button>
+                        <h3 className="text-2xl lg:text-5xl font-black mb-8 lg:mb-10 text-gray-900 uppercase tracking-tighter relative z-10">Построим ваш проект вместе?</h3>
+                        <button onClick={onNext} className="btn-primary px-12 py-4 lg:px-16 lg:py-5 rounded-full font-black uppercase tracking-[0.2em] relative z-10 text-sm lg:text-base">Начать бриф</button>
                     </div>
                 </div>
             );
@@ -638,63 +561,63 @@
                 finally { setSending(false); }
             };
 
-            const inputClass = "w-full bg-white/60 dark:bg-black/40 border border-gray-200 dark:border-white/10 p-5 rounded-2xl outline-none focus:border-purple-400 dark:focus:border-purple-500 focus:bg-white dark:focus:bg-black/60 transition-all text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 shadow-inner font-medium";
+            const inputClass = "w-full bg-white/60 border border-gray-200 p-4 rounded-xl outline-none focus:border-purple-400 focus:bg-white transition-all text-gray-900 placeholder:text-gray-400 shadow-inner font-medium text-sm";
 
             if (submitted) return (
-                <div className="py-40 text-center max-w-xl mx-auto px-6 modal-fade-in">
-                    <div className="w-24 h-24 bg-purple-100 dark:bg-purple-500/10 border border-transparent dark:border-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-10 animate-bounce">
-                        <Icon name="check" size={48} className="text-purple-600 dark:text-purple-500" />
+                <div className="py-24 text-center max-w-xl mx-auto px-6 modal-fade-in">
+                    <div className="w-20 h-20 bg-purple-100 border border-transparent rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+                        <Icon name="check" size={40} className="text-purple-600" />
                     </div>
-                    <h2 className="text-5xl font-black mb-4 uppercase tracking-tighter text-gray-900 dark:text-white">ПРИНЯТО</h2>
-                    <p className="text-gray-500 dark:text-white/40 mb-12 text-lg font-medium uppercase tracking-widest">ТЗ в обработке. Ожидайте звонка.</p>
-                    <button onClick={onReset} className="text-purple-600 dark:text-purple-400 font-black uppercase tracking-[0.2em] hover:text-purple-800 dark:hover:text-white border-b-2 border-purple-200 dark:border-purple-500/30 hover:border-purple-600 pb-1 transition-all">Назад на базу</button>
+                    <h2 className="text-4xl font-black mb-3 uppercase tracking-tighter text-gray-900">ПРИНЯТО</h2>
+                    <p className="text-gray-500 mb-10 text-base font-medium uppercase tracking-widest">ТЗ в обработке. Ожидайте звонка.</p>
+                    <button onClick={onReset} className="text-purple-600 font-black text-sm uppercase tracking-[0.2em] hover:text-purple-800 border-b-2 border-purple-200 hover:border-purple-600 pb-1 transition-all">Назад на базу</button>
                 </div>
             );
 
             return (
-                <div className="max-w-4xl mx-auto px-6 py-12 space-y-16 pb-32">
+                <div className="max-w-4xl mx-auto px-6 py-8 space-y-12 pb-24">
                     <div className="text-center">
-                        <h2 className="text-5xl lg:text-7xl font-black uppercase tracking-tighter mb-4 text-glow text-gray-900 dark:text-white">БРИФИНГ</h2>
-                        <p className="text-gray-400 dark:text-white/30 font-bold uppercase text-xs tracking-[0.4em]">Шаг 3: Сборка технического задания</p>
+                        <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 text-glow text-gray-900">БРИФИНГ</h2>
+                        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.4em]">Шаг 3: Сборка технического задания</p>
                     </div>
 
-                    <form onSubmit={(e) => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-10">
+                    <form onSubmit={(e) => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-8">
                         
-                        <div className="glass-card p-8 lg:p-12 rounded-[2.5rem] space-y-8">
-                            <h3 className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] flex items-center gap-4">
-                                <div className="w-8 h-1px bg-purple-200 dark:bg-purple-500/30"></div> 01. Контакты
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <h3 className="text-[10px] font-black text-purple-600 uppercase tracking-[0.4em] flex items-center gap-3">
+                                <div className="w-6 h-1px bg-purple-200"></div> 01. Контакты
                             </h3>
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 dark:text-white/20 uppercase font-black ml-2 tracking-widest">ФИО или Название компании *</label>
+                            <div className="grid md:grid-cols-2 gap-5">
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] text-gray-500 uppercase font-black ml-1 tracking-widest">ФИО или Название компании *</label>
                                     <input required placeholder="Иван Иванов" className={inputClass} value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] text-gray-500 dark:text-white/20 uppercase font-black ml-2 tracking-widest">Город реализации *</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-[9px] text-gray-500 uppercase font-black ml-1 tracking-widest">Город реализации *</label>
                                     <input required placeholder="Москва" className={inputClass} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
                                 </div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] text-gray-500 dark:text-white/20 uppercase font-black ml-2 tracking-widest">Способ связи (Telegram / WA) *</label>
+                            <div className="space-y-1.5">
+                                <label className="text-[9px] text-gray-500 uppercase font-black ml-1 tracking-widest">Способ связи (Telegram / WA) *</label>
                                 <input required placeholder="@username / +7..." className={inputClass} value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} />
                             </div>
                         </div>
 
-                        <div className="glass-card p-8 lg:p-12 rounded-[2.5rem] space-y-8">
-                            <h3 className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] flex items-center gap-4">
-                                <div className="w-8 h-1px bg-purple-200 dark:bg-purple-500/30"></div> 02. Тайминг
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <h3 className="text-[10px] font-black text-purple-600 uppercase tracking-[0.4em] flex items-center gap-3">
+                                <div className="w-6 h-1px bg-purple-200"></div> 02. Тайминг
                             </h3>
-                            <div className="grid md:grid-cols-2 gap-10 items-center">
-                                <div className="space-y-5">
-                                    <p className="text-gray-500 dark:text-white/40 font-medium leading-relaxed uppercase text-xs tracking-wider">Определите окно разработки. Мы работаем итерациями по 7 дней.</p>
-                                    <div className="bg-white/60 dark:bg-black/40 p-5 rounded-2xl border border-gray-200 dark:border-white/5 space-y-3">
-                                        <div className="flex justify-between text-[10px] uppercase font-black">
-                                            <span className="text-gray-400 dark:text-white/30">СТАРТ</span>
-                                            <span className={formData.dateFromObj ? 'text-purple-600 dark:text-purple-400' : 'text-gray-300 dark:text-white/10'}>{formData.dateFromObj ? formData.dateFromObj.toLocaleDateString('ru-RU') : 'ОЖИДАНИЕ'}</span>
+                            <div className="grid md:grid-cols-2 gap-8 items-center">
+                                <div className="space-y-4">
+                                    <p className="text-gray-500 font-medium leading-relaxed uppercase text-[10px] tracking-wider">Определите окно разработки. Мы работаем итерациями по 7 дней.</p>
+                                    <div className="bg-white/60 p-4 rounded-xl border border-gray-200 space-y-2.5">
+                                        <div className="flex justify-between text-[9px] uppercase font-black">
+                                            <span className="text-gray-400">СТАРТ</span>
+                                            <span className={formData.dateFromObj ? 'text-purple-600' : 'text-gray-300'}>{formData.dateFromObj ? formData.dateFromObj.toLocaleDateString('ru-RU') : 'ОЖИДАНИЕ'}</span>
                                         </div>
-                                        <div className="flex justify-between text-[10px] uppercase font-black border-t border-gray-100 dark:border-white/5 pt-3">
-                                            <span className="text-gray-400 dark:text-white/30">ФИНИШ</span>
-                                            <span className={formData.dateToObj ? 'text-purple-600 dark:text-purple-400' : 'text-gray-300 dark:text-white/10'}>{formData.dateToObj ? formData.dateToObj.toLocaleDateString('ru-RU') : 'ОЖИДАНИЕ'}</span>
+                                        <div className="flex justify-between text-[9px] uppercase font-black border-t border-gray-100 pt-2.5">
+                                            <span className="text-gray-400">ФИНИШ</span>
+                                            <span className={formData.dateToObj ? 'text-purple-600' : 'text-gray-300'}>{formData.dateToObj ? formData.dateToObj.toLocaleDateString('ru-RU') : 'ОЖИДАНИЕ'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -706,77 +629,88 @@
                             </div>
                         </div>
 
-                        <div className="glass-card p-8 lg:p-12 rounded-[2.5rem] space-y-8">
-                            <h3 className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] flex items-center gap-4">
-                                <div className="w-8 h-1px bg-purple-200 dark:bg-purple-500/30"></div> 03. Концепт
-                            </h3>
-                            <textarea placeholder="Опишите ваши идеи, направление кухни, целевую аудиторию..." className={`${inputClass} h-40 resize-none`} value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} />
-                            <div className="flex items-center gap-4 bg-white/60 dark:bg-white/5 p-2 rounded-2xl border border-gray-200 dark:border-white/5 focus-within:border-purple-400 transition-colors">
-                                <div className="p-3 bg-purple-100 text-purple-600 dark:bg-purple-600 dark:text-white rounded-xl"><Icon name="link" size={18} /></div>
-                                <input placeholder="Ссылка на папку с материалами" className="bg-transparent border-none outline-none w-full font-medium text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/30 text-sm" value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} />
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <h3 className="text-[10px] font-black text-purple-600 uppercase tracking-[0.4em] flex items-center gap-3">
+                                    <div className="w-6 h-1px bg-purple-200"></div> 03. Концепт
+                                </h3>
+                            </div>
+                            
+                            <div>
+                                <textarea 
+                                    placeholder="Опишите ваши идеи, направление кухни, целевую аудиторию..." 
+                                    className={`${inputClass} h-32 resize-none`} 
+                                    value={formData.concept} 
+                                    onChange={e => setFormData({...formData, concept: e.target.value})} 
+                                />
+                            </div>
+
+                            <div className="flex items-center gap-3 bg-white/60 p-1.5 rounded-xl border border-gray-200 focus-within:border-purple-400 transition-colors">
+                                <div className="p-2 bg-purple-100 text-purple-600 rounded-lg"><Icon name="link" size={16} /></div>
+                                <input placeholder="Ссылка на папку с материалами" className="bg-transparent border-none outline-none w-full font-medium text-gray-900 placeholder:text-gray-400 text-xs" value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} />
                             </div>
                         </div>
 
-                        <div className="space-y-6">
-                            <h3 className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] ml-4 flex items-center gap-4">
-                                <div className="w-8 h-1px bg-purple-200 dark:bg-purple-500/30"></div> 04. Объемы
+                        <div className="space-y-4">
+                            <h3 className="text-[10px] font-black text-purple-600 uppercase tracking-[0.4em] ml-2 flex items-center gap-3">
+                                <div className="w-6 h-1px bg-purple-200"></div> 04. Объемы
                             </h3>
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                                 {categories.map(c => (
-                                    <div key={c} className="glass-card p-5 rounded-2xl border border-gray-200 dark:border-white/5 flex flex-col gap-4 group hover:border-purple-300 dark:hover:border-purple-500/40 transition-all shadow-sm">
-                                        <span className="text-[10px] font-black uppercase text-gray-400 dark:text-white/30 tracking-widest group-hover:text-purple-600 dark:group-hover:text-purple-400">{c}</span>
-                                        <div className="flex items-center justify-between bg-gray-50 dark:bg-black/40 p-1.5 rounded-xl border border-gray-100 dark:border-white/5">
-                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-8 h-8 rounded-lg bg-white dark:bg-white/5 shadow-sm hover:bg-gray-100 dark:hover:bg-white/10 flex items-center justify-center text-gray-600 dark:text-white/70 transition-colors"><Icon name="minus" size={14} /></button>
-                                            <span className="font-black text-lg text-gray-900 dark:text-white">{dishCounts[c]||0}</span>
-                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-8 h-8 rounded-lg bg-purple-600 text-white hover:bg-purple-700 flex items-center justify-center shadow-md transition-colors"><Icon name="plus" size={14} /></button>
+                                    <div key={c} className="glass-card p-4 rounded-xl border border-gray-200 flex flex-col gap-3 group hover:border-purple-300 transition-all shadow-sm">
+                                        <span className="text-[9px] font-black uppercase text-gray-400 tracking-widest group-hover:text-purple-600">{c}</span>
+                                        <div className="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-7 h-7 rounded-md bg-white shadow-sm hover:bg-gray-100 flex items-center justify-center text-gray-600 transition-colors"><Icon name="minus" size={12} /></button>
+                                            <span className="font-black text-base text-gray-900">{dishCounts[c]||0}</span>
+                                            <button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-7 h-7 rounded-md bg-purple-600 text-white hover:bg-purple-700 flex items-center justify-center shadow-sm transition-colors"><Icon name="plus" size={12} /></button>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="glass-card p-8 lg:p-12 rounded-[2.5rem] space-y-8">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
-                                <h3 className="text-xs font-black uppercase tracking-[0.4em] text-purple-600 dark:text-purple-400">05. Референсы ({selectedItems.length})</h3>
-                                <button type="button" onClick={onAddMore} className="btn-secondary px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95">
-                                    <Icon name="plus" size={14} className="text-purple-600 dark:text-purple-500"/> Выбрать еще
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600">05. Референсы ({selectedItems.length})</h3>
+                                <button type="button" onClick={onAddMore} className="btn-secondary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95">
+                                    <Icon name="plus" size={12} className="text-purple-600"/> Выбрать еще
                                 </button>
                             </div>
                             {selectedItems.length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {selectedItems.map(item => (
-                                        <div key={item.id} className="bg-white/80 dark:bg-black/40 border border-gray-200 dark:border-white/5 rounded-2xl p-3 flex items-center gap-4 group shadow-sm hover:shadow-md transition-shadow">
-                                            <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=200'} className="w-16 h-16 rounded-xl object-cover dark:grayscale-[0.5] dark:group-hover:grayscale-0 transition-all" />
+                                        <div key={item.id} className="bg-white/80 border border-gray-200 rounded-xl p-2.5 flex items-center gap-3 group shadow-sm hover:shadow-md transition-shadow">
+                                            <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=200'} className="w-12 h-12 rounded-lg object-cover transition-all" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[9px] text-purple-500 font-black uppercase tracking-widest mb-1">{item.category}</p>
-                                                <p className="text-sm font-black truncate uppercase tracking-tight text-gray-900 dark:text-white">{item.title || 'Без названия'}</p>
+                                                <p className="text-[8px] text-purple-500 font-black uppercase tracking-widest mb-0.5">{item.category}</p>
+                                                <p className="text-xs font-black truncate uppercase tracking-tight text-gray-900">{item.title || 'Без названия'}</p>
                                             </div>
-                                            <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="w-10 h-10 rounded-full flex items-center justify-center text-gray-400 dark:text-white/10 hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 transition-all"><Icon name="x" size={18} /></button>
+                                            <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"><Icon name="x" size={14} /></button>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-16 border-2 border-dashed border-gray-300 dark:border-white/10 rounded-[2rem] bg-gray-50/50 dark:bg-white/5">
-                                    <p className="text-gray-400 dark:text-white/20 text-xs font-black uppercase tracking-[0.2em]">Пусто. Вернитесь в портфолио за примерами.</p>
+                                <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-[1.5rem] bg-gray-50/50">
+                                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">Пусто. Вернитесь в портфолио за примерами.</p>
                                 </div>
                             )}
                         </div>
 
-                        <div className="glass-card p-8 lg:p-12 rounded-[2.5rem] space-y-8">
-                            <h3 className="text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] flex items-center gap-4"><Icon name="message-square" size={16}/> Комментарий</h3>
-                            <textarea placeholder="Любые мысли, пожелания или важные уточнения..." className={`${inputClass} h-32 resize-none`} value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} />
+                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                            <h3 className="text-[10px] font-black text-purple-600 uppercase tracking-[0.4em] flex items-center gap-3"><Icon name="message-square" size={14}/> Комментарий</h3>
+                            <textarea placeholder="Любые мысли, пожелания или важные уточнения..." className={`${inputClass} h-24 resize-none`} value={formData.comment} onChange={e => setFormData({...formData, comment: e.target.value})} />
                         </div>
 
                         {warn ? (
-                            <div className="bg-orange-50 dark:bg-yellow-500/5 p-8 rounded-[2rem] border border-orange-200 dark:border-yellow-500/20 text-center animate-pulse shadow-sm">
-                                <p className="text-orange-600 dark:text-yellow-500 font-black mb-6 uppercase tracking-widest text-xs">Концепция не заполнена! <br className="sm:hidden"/> Без нее будет сложно начать.</p>
-                                <div className="flex flex-col sm:flex-row justify-center gap-3 max-w-sm mx-auto">
-                                    <button type="button" onClick={() => setWarn(false)} className="btn-secondary flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Дописать</button>
-                                    <button type="button" onClick={send} className="bg-orange-500 dark:bg-yellow-500 text-white dark:text-black flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 shadow-md">Отправить так</button>
+                            <div className="bg-orange-50 p-6 rounded-[1.5rem] border border-orange-200 text-center animate-pulse shadow-sm">
+                                <p className="text-orange-600 font-black mb-4 uppercase tracking-widest text-[10px]">Концепция не заполнена! <br className="sm:hidden"/> Без нее будет сложно начать.</p>
+                                <div className="flex flex-col sm:flex-row justify-center gap-2 max-w-xs mx-auto">
+                                    <button type="button" onClick={() => setWarn(false)} className="btn-secondary flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest">Дописать</button>
+                                    <button type="button" onClick={send} className="bg-orange-500 text-white flex-1 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 shadow-md">Отправить так</button>
                                 </div>
                             </div>
                         ) : (
-                            <button type="submit" disabled={sending} className="group relative w-full btn-primary py-6 rounded-[2rem] font-black text-xl uppercase tracking-[0.3em] active:scale-[0.98] disabled:opacity-50 transition-all overflow-hidden mt-4">
+                            <button type="submit" disabled={sending} className="group relative w-full btn-primary py-5 rounded-[1.5rem] font-black text-lg uppercase tracking-[0.3em] active:scale-[0.98] disabled:opacity-50 transition-all overflow-hidden mt-2">
                                 <div className="relative z-10">{sending ? 'Отправка...' : 'Отправить ТЗ в работу'}</div>
                             </button>
                         )}
