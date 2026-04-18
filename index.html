@@ -35,7 +35,7 @@
             position: fixed;
             inset: 0;
             background-image: url('https://www.image2url.com/r2/default/images/1776511010980-24ecdd2c-e68a-4a32-8f80-4a38018b3f75.jpg');
-            background-size: cover; /* Идеальные пропорции без растягивания */
+            background-size: cover; 
             background-position: center;
             background-repeat: no-repeat;
             z-index: -2;
@@ -44,7 +44,7 @@
         .bg-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.2); /* Легкая пелена, чтобы мрамор читался везде */
+            background: rgba(255, 255, 255, 0.2);
             z-index: -1;
         }
 
@@ -261,6 +261,7 @@
             const [portfolioItems, setPortfolioItems] = useState([]);
             const [categories, setCategories] = useState([]);
             const [isLoadingData, setIsLoadingData] = useState(true);
+            const [dbError, setDbError] = useState(null); // Состояние для хранения текста ошибки БД
             const [formData, setFormData] = useState({ 
                 fullName: '', city: '', contacts: '', concept: '', 
                 dateFromObj: null, dateToObj: null, 
@@ -268,29 +269,103 @@
             });
             const [dishCounts, setDishCounts] = useState({});
 
+            const [fb, setFb] = useState(null);
+            const [user, setUser] = useState(null);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
             useEffect(() => {
-                const fetchData = async () => {
-                    setIsLoadingData(true);
+                const loadFirebase = async () => {
                     try {
-                        const resPort = await fetch(CSV_URL);
-                        if (resPort.ok) {
-                            const csvText = await resPort.text();
-                            const parsedItems = parseCSV(csvText);
-                            if (parsedItems.length > 0) {
-                                setPortfolioItems(parsedItems);
-                                setCategories([...new Set(parsedItems.map(item => item.category))]);
-                            }
-                        }
-                    } catch (e) { console.error(e); }
-                    finally { 
-                        setIsLoadingData(false);
-                        setTimeout(() => lucide.createIcons(), 100); 
+                        const importModule = new Function('url', 'return import(url)');
+                        const [appMod, authMod, fsMod] = await Promise.all([
+                            importModule('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js'),
+                            importModule('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
+                            importModule('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
+                        ]);
+                        const firebaseConfig = {
+                            apiKey: "AIzaSyCbsJUDJ4AMJBi_UOnX23n-T-vGq4O4mGs",
+                            authDomain: "menubuild-c3fc6.firebaseapp.com",
+                            projectId: "menubuild-c3fc6",
+                            storageBucket: "menubuild-c3fc6.firebasestorage.app",
+                            messagingSenderId: "1013946778157",
+                            appId: "1:1013946778157:web:cd1225bfeb3426720aeea4"
+                        };
+                        const app = appMod.initializeApp(firebaseConfig);
+                        const auth = authMod.getAuth(app);
+                        const db = fsMod.getFirestore(app);
+                        setFb({ auth, db, authMod, fsMod });
+                    } catch (e) { 
+                        console.error("Firebase load error", e); 
+                        setDbError("Не удалось загрузить модули Firebase. Проверьте интернет-соединение.");
+                        setIsLoadingData(false); 
                     }
                 };
-                fetchData();
+                loadFirebase();
             }, []);
 
-            useEffect(() => { lucide.createIcons(); }, [activeTab, isLoadingData, mobileMenuOpen]);
+            useEffect(() => {
+                if (!fb) return;
+                const { auth, authMod } = fb;
+                const initAuth = async () => {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            try {
+                                await authMod.signInWithCustomToken(auth, __initial_auth_token);
+                            } catch (customTokenErr) {
+                                console.warn("Токен окружения не подошел к личной базе, переключаемся на анонимный вход...", customTokenErr);
+                                await authMod.signInAnonymously(auth);
+                            }
+                        } else {
+                            await authMod.signInAnonymously(auth);
+                        }
+                    } catch (e) { 
+                        console.error("Auth error", e); 
+                        setDbError("Ошибка авторизации. Убедитесь, что в Firebase Console -> Authentication -> Sign-in method включен способ входа 'Anonymous' (Анонимный).");
+                        setIsLoadingData(false);
+                    }
+                };
+                initAuth();
+                const unsub = authMod.onAuthStateChanged(auth, setUser);
+                return () => unsub();
+            }, [fb]);
+
+            useEffect(() => {
+                if (!fb || !user) return;
+                const { db, fsMod } = fb;
+                const portfolioRef = fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'portfolio');
+                
+                const unsub = fsMod.onSnapshot(portfolioRef, (snapshot) => {
+                    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    setPortfolioItems(items);
+                    
+                    // Собираем уникальные категории, даже если они написаны через запятую
+                    const allCats = new Set();
+                    items.forEach(item => {
+                        if (item.category) {
+                            item.category.split(',').forEach(c => {
+                                const trimmed = c.trim();
+                                if (trimmed) allCats.add(trimmed);
+                            });
+                        }
+                    });
+                    setCategories([...allCats]);
+                    
+                    setIsLoadingData(false);
+                    setDbError(null); // Очищаем ошибку если данные пришли
+                    setTimeout(() => window.lucide && window.lucide.createIcons(), 100);
+                }, (error) => {
+                    console.error("Firestore DB error:", error);
+                    if (error.code === 'permission-denied' || (error.message && error.message.includes('permissions'))) {
+                        setDbError("Доступ к базе данных Firebase закрыт (Missing Permissions). Зайдите в Firebase Console -> Firestore Database -> вкладка 'Rules' (Правила) и разрешите чтение/запись.");
+                    } else {
+                        setDbError(`Ошибка БД: ${error.message}`);
+                    }
+                    setIsLoadingData(false);
+                });
+                return () => unsub();
+            }, [fb, user, appId]);
+
+            useEffect(() => { window.lucide && window.lucide.createIcons(); }, [activeTab, isLoadingData, mobileMenuOpen, dbError]);
 
             const navigateTo = (tab) => {
                 setActiveTab(tab);
@@ -305,27 +380,72 @@
                 navigateTo('welcome');
             };
 
+            // Экран загрузки
             if (isLoadingData) {
                 return (
                     <div className="min-h-screen flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-6"></div>
+                        <div className="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mb-6"></div>
                         <h2 className="text-xl font-black uppercase tracking-[0.5em] text-gray-400 animate-pulse">Tastelab</h2>
+                    </div>
+                );
+            }
+
+            // Экран критической ошибки БД
+            if (dbError) {
+                const projectId = fb?.auth?.app?.options?.projectId || "menubuild-c3fc6";
+                const rulesLink = `https://console.firebase.google.com/project/${projectId}/firestore/rules`;
+
+                return (
+                    <div className="min-h-screen relative flex items-center justify-center p-6 text-gray-900">
+                        <div className="bg-container"></div>
+                        <div className="bg-overlay"></div>
+                        <div className="glass-card max-w-2xl w-full p-8 lg:p-12 rounded-[2rem] text-center border-red-200/50 shadow-2xl relative z-10">
+                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-200">
+                                <Icon name="shield-alert" size={40} className="text-red-500" />
+                            </div>
+                            <h2 className="text-2xl lg:text-3xl font-black uppercase tracking-tighter mb-4">Блокировка доступа</h2>
+                            <p className="text-gray-600 font-medium leading-relaxed mb-6">{dbError}</p>
+                            
+                            {dbError.includes('Missing Permissions') && (
+                                <div className="text-left bg-gray-900 p-5 rounded-2xl shadow-inner mb-6 space-y-4">
+                                    <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
+                                        <p className="text-red-400 text-sm font-bold mb-1">⚠️ Действие требуется от вас:</p>
+                                        <p className="text-gray-300 text-xs mb-3">Код не может сам обойти эту блокировку. Вам нужно зайти в настройки базы и разрешить доступ.</p>
+                                        <a href={rulesLink} target="_blank" className="bg-white text-gray-900 px-4 py-2 rounded-lg text-[10px] sm:text-xs font-black uppercase tracking-widest hover:bg-gray-200 transition-colors inline-block">Перейти в настройки базы &rarr;</a>
+                                    </div>
+                                    <div>
+                                        <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Скопируйте этот код и вставьте там во вкладку Rules:</p>
+                                        <code className="text-green-400 text-sm font-mono whitespace-pre overflow-x-auto block">
+                                            rules_version = '2';<br/>
+                                            service cloud.firestore {'{'}<br/>
+                                            &nbsp;&nbsp;match /databases/&#123;database&#125;/documents {'{'}<br/>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;match /&#123;document=**&#125; {'{'}<br/>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;allow read, write: if true;<br/>
+                                            &nbsp;&nbsp;&nbsp;&nbsp;{'}'}<br/>
+                                            &nbsp;&nbsp;{'}'}<br/>
+                                            {'}'}
+                                        </code>
+                                    </div>
+                                </div>
+                            )}
+                            <button onClick={() => window.location.reload()} className="btn-primary px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest active:scale-95">Перезагрузить страницу</button>
+                        </div>
                     </div>
                 );
             }
 
             return (
                 <div className="min-h-screen relative text-gray-900">
-                    <nav className="fixed w-full z-50 bg-white/70 backdrop-blur-2xl border-b border-gray-200 transition-colors">
+                    <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm transition-colors">
                         <div className="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
                             <div className="text-3xl font-black tracking-tighter cursor-pointer group" onClick={() => navigateTo('welcome')}>
-                                TASTE<span className="text-purple-600 group-hover:text-purple-800 transition-colors">LAB</span>
+                                TASTE<span className="font-light text-gray-400 group-hover:text-gray-900 transition-colors">LAB</span>
                             </div>
                             <div className="hidden md:flex space-x-10 items-center">
-                                <button onClick={() => navigateTo('welcome')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'welcome' ? 'text-purple-700' : 'text-gray-500 hover:text-gray-900'}`}>О нас</button>
-                                <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'portfolio' ? 'text-purple-700' : 'text-gray-500 hover:text-gray-900'}`}>Портфолио</button>
+                                <button onClick={() => navigateTo('welcome')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'welcome' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest transition-colors ${activeTab === 'portfolio' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}>Портфолио</button>
                                 <button onClick={() => navigateTo('brief')} className="btn-primary px-8 py-3 rounded-full text-sm font-black uppercase tracking-widest flex items-center gap-3 active:scale-95">
-                                    Составить ТЗ {selectedItems.length > 0 && <span className="bg-white text-purple-700 px-2.5 py-0.5 rounded-full text-[10px]">{selectedItems.length}</span>}
+                                    Составить ТЗ {selectedItems.length > 0 && <span className="bg-white text-gray-900 px-2.5 py-0.5 rounded-full text-[10px]">{selectedItems.length}</span>}
                                 </button>
                             </div>
                             <div className="flex items-center gap-4 md:hidden">
@@ -336,8 +456,8 @@
                         </div>
                         {mobileMenuOpen && (
                             <div className="md:hidden glass-card border-b border-gray-200 p-5 space-y-3 modal-fade-in mx-4 mt-2 rounded-[1.5rem]">
-                                <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'welcome' ? 'bg-purple-100 text-purple-700' : 'bg-gray-50 text-gray-600'}`}>О нас</button>
-                                <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'portfolio' ? 'bg-purple-100 text-purple-700' : 'bg-gray-50 text-gray-600'}`}>Портфолио</button>
+                                <button onClick={() => navigateTo('welcome')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'welcome' ? 'bg-gray-100 text-gray-900' : 'bg-transparent text-gray-500'}`}>О нас</button>
+                                <button onClick={() => navigateTo('portfolio')} className={`block w-full text-left p-3.5 rounded-xl font-bold text-sm uppercase tracking-widest ${activeTab === 'portfolio' ? 'bg-gray-100 text-gray-900' : 'bg-transparent text-gray-500'}`}>Портфолио</button>
                                 <button onClick={() => navigateTo('brief')} className="block w-full btn-primary text-center py-3.5 rounded-xl font-black text-sm uppercase tracking-widest shadow-xl">Составить ТЗ {selectedItems.length > 0 && `(${selectedItems.length})`}</button>
                             </div>
                         )}
@@ -346,11 +466,212 @@
                     <main className="pt-32">
                         {activeTab === 'welcome' && <WelcomePage onNext={() => navigateTo('portfolio')} />}
                         {activeTab === 'portfolio' && <PortfolioPage items={portfolioItems} categories={categories} onNext={() => navigateTo('brief')} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />}
+                        {activeTab === 'admin' && <AdminPage fb={fb} appId={appId} portfolioItems={portfolioItems} />}
                         {activeTab === 'brief' && <BriefPage categories={categories} selectedItems={selectedItems} setSelectedItems={setSelectedItems} formData={formData} setFormData={setFormData} dishCounts={dishCounts} setDishCounts={setDishCounts} onReset={resetApp} onAddMore={() => navigateTo('portfolio')} />}
                     </main>
+
+                    {/* Секретный вход в админку */}
+                    <button 
+                        onClick={() => navigateTo('admin')} 
+                        className="fixed bottom-6 right-6 z-[100] p-3 rounded-full opacity-10 hover:opacity-100 hover:bg-white text-gray-500 hover:text-gray-900 hover:shadow-xl transition-all duration-300"
+                        title="Управление"
+                    >
+                        <Icon name="home" size={24} />
+                    </button>
                 </div>
             );
         }
+
+        const AdminPage = ({ fb, appId, portfolioItems }) => {
+            const [newItem, setNewItem] = useState({ category: '', title: '', description: '' });
+            const [imageFile, setImageFile] = useState(null);
+            const [imagePreview, setImagePreview] = useState("");
+            const [statusMsg, setStatusMsg] = useState("");
+            const [deletingId, setDeletingId] = useState(null);
+
+            // Умный сжиматель фоток перед отправкой в базу
+            const compressImage = (file) => {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const maxDim = 800; // Оптимальный размер для веба, чтобы база не лопнула
+                            
+                            if (width > height && width > maxDim) {
+                                height *= maxDim / width;
+                                width = maxDim;
+                            } else if (height > maxDim) {
+                                width *= maxDim / height;
+                                height = maxDim;
+                            }
+                            
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            // Возвращаем облегченный код картинки
+                            resolve(canvas.toDataURL('image/jpeg', 0.8)); 
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const handleFileChange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    setImageFile(file);
+                    setImagePreview(URL.createObjectURL(file));
+                }
+            };
+
+            const handleAdd = async (e) => {
+                e.preventDefault();
+                if (!fb) return;
+                if (!imageFile) {
+                    setStatusMsg("Загрузи фото!");
+                    return;
+                }
+
+                setStatusMsg("Сжимаем и сохраняем...");
+                const { db, fsMod } = fb;
+                try {
+                    const finalImageStr = await compressImage(imageFile);
+                    
+                    await fsMod.addDoc(fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'portfolio'), {
+                        category: newItem.category,
+                        title: newItem.title,
+                        description: newItem.description,
+                        image: finalImageStr
+                    });
+                    
+                    setNewItem({ category: '', title: '', description: '' });
+                    setImageFile(null);
+                    setImagePreview("");
+                    setStatusMsg("Успешно добавлено!");
+                    setTimeout(() => setStatusMsg(""), 3000);
+                } catch (err) { 
+                    console.error(err); 
+                    setStatusMsg("Ошибка при добавлении"); 
+                }
+            };
+
+            const handleDelete = async (id) => {
+                if (!fb) return;
+                const { db, fsMod } = fb;
+                try {
+                    await fsMod.deleteDoc(fsMod.doc(db, 'artifacts', appId, 'public', 'data', 'portfolio', id));
+                    setDeletingId(null);
+                } catch (err) { 
+                    console.error(err); 
+                    setStatusMsg("Ошибка при удалении");
+                }
+            };
+
+            const importFromCSV = async () => {
+                if (!fb) return;
+                setStatusMsg("Идет миграция из таблицы...");
+                const { db, fsMod } = fb;
+                try {
+                    const res = await fetch(CSV_URL);
+                    const text = await res.text();
+                    const items = parseCSV(text);
+                    const portfolioRef = fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'portfolio');
+                    let count = 0;
+                    for (const item of items) {
+                        const { id, ...data } = item;
+                        await fsMod.addDoc(portfolioRef, data);
+                        count++;
+                    }
+                    setStatusMsg(`Миграция завершена! Перенесено: ${count}`);
+                    setTimeout(() => setStatusMsg(""), 5000);
+                } catch (e) { 
+                    console.error(e); 
+                    setStatusMsg("Ошибка миграции");
+                }
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto px-6 py-12 space-y-12 pb-32">
+                    <div className="text-center">
+                        <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 text-gray-900">УПРАВЛЕНИЕ</h2>
+                        <p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Наполнение базы референсов</p>
+                    </div>
+
+                    <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                        <form onSubmit={handleAdd} className="space-y-6">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <input placeholder="Категории (через запятую: Десерты, Бар)" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} />
+                                <input placeholder="Название (необязательно)" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors" value={newItem.title} onChange={e => setNewItem({...newItem, title: e.target.value})} />
+                            </div>
+                            
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <label className="w-full sm:flex-1 border-2 border-dashed border-gray-300 hover:border-purple-400 bg-white/50 p-6 rounded-xl text-center cursor-pointer transition-colors group flex flex-col items-center justify-center min-h-[100px]">
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                    <Icon name="upload" className="text-gray-400 group-hover:text-purple-600 mb-2 transition-colors" size={24} />
+                                    <span className="text-xs font-bold text-gray-500 group-hover:text-purple-700 uppercase tracking-widest transition-colors">
+                                        {imageFile ? imageFile.name : "Выбрать фото с устройства"}
+                                    </span>
+                                </label>
+                                {imagePreview && (
+                                    <div className="w-24 h-24 shrink-0 rounded-xl overflow-hidden border border-gray-200 shadow-sm relative group">
+                                        <img src={imagePreview} className="w-full h-full object-cover" alt="Preview" />
+                                        <button type="button" onClick={() => {setImageFile(null); setImagePreview("");}} className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icon name="x" size={12} /></button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <textarea placeholder="Описание" className="w-full bg-white/60 border border-gray-200 p-4 rounded-xl text-sm outline-none focus:border-purple-500 transition-colors h-24 resize-none" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} />
+                            
+                            <div className="flex items-center gap-4">
+                                <button type="submit" disabled={!imageFile} className="btn-primary px-8 py-3 rounded-xl font-black text-sm uppercase tracking-widest disabled:opacity-50">Добавить в базу</button>
+                                {statusMsg && <span className="text-xs font-bold text-gray-600 uppercase tracking-wider bg-white/80 px-3 py-1.5 rounded-lg border border-gray-100">{statusMsg}</span>}
+                            </div>
+                        </form>
+                    </div>
+
+                    <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h3 className="font-black uppercase tracking-widest text-gray-900">Текущие элементы ({portfolioItems.length})</h3>
+                            {portfolioItems.length === 0 && (
+                                <button onClick={importFromCSV} className="btn-secondary px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-purple-600 hover:bg-purple-50 transition-colors">
+                                    Мигрировать из Google Таблиц
+                                </button>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {portfolioItems.map(item => (
+                                <div key={item.id} className="flex items-center gap-4 bg-white/80 p-3 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                                    <img src={item.image} alt={item.title || 'Фото'} className="w-12 h-12 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-[10px] font-black text-purple-500 uppercase tracking-widest truncate">{item.category || 'Без категории'}</p>
+                                        <p className="text-sm font-bold text-gray-900 truncate">{item.title || 'Без названия'}</p>
+                                    </div>
+                                    
+                                    {deletingId === item.id ? (
+                                        <div className="flex items-center gap-2 pr-2 animate-in fade-in slide-in-from-right-4">
+                                            <button onClick={() => handleDelete(item.id)} className="text-[10px] bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg font-black uppercase tracking-wider transition-colors shadow-sm">Удалить</button>
+                                            <button onClick={() => setDeletingId(null)} className="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg font-black uppercase tracking-wider transition-colors">Отмена</button>
+                                        </div>
+                                    ) : (
+                                        <button onClick={() => setDeletingId(item.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Удалить">
+                                            <Icon name="trash" size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            {portfolioItems.length === 0 && <p className="text-sm text-gray-500 text-center py-6">База пуста. Добавьте новые элементы.</p>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
         const WelcomePage = ({ onNext }) => (
             <div className="max-w-5xl mx-auto px-6 py-12 lg:py-24 flex flex-col items-center justify-center text-center min-h-[60vh]">
@@ -361,7 +682,7 @@
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 text-glow">ХИТОВ</span>
                         </h1>
                     </div>
-                    <p className="text-lg lg:text-xl text-gray-500 max-w-2xl mx-auto font-medium leading-relaxed uppercase tracking-tighter">
+                    <p className="text-lg lg:text-xl text-black max-w-2xl mx-auto font-bold leading-relaxed uppercase tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,1)]">
                         Проектируем гастрономические смыслы. <br className="hidden md:block"/> От идеи до идеальной подачи.
                     </p>
                     <div className="flex justify-center pt-6">
@@ -378,7 +699,15 @@
             const [previewItem, setPreviewItem] = useState(null);
             const [touchStart, setTouchStart] = useState(0);
             
-            const filtered = useMemo(() => cat === 'Все' ? items : items.filter(i => i.category === cat), [items, cat]);
+            const filtered = useMemo(() => {
+                if (cat === 'Все') return items;
+                return items.filter(i => {
+                    if (!i.category) return false;
+                    const itemCats = i.category.split(',').map(c => c.trim());
+                    return itemCats.includes(cat);
+                });
+            }, [items, cat]);
+
             const toggle = (i) => setSelectedItems(prev => prev.find(x => x.id === i.id) ? prev.filter(x => x.id !== i.id) : [...prev, i]);
 
             const currentIndex = useMemo(() => previewItem ? filtered.findIndex(i => i.id === previewItem.id) : -1, [previewItem, filtered]);
@@ -430,7 +759,7 @@
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
                         {filtered.map(i => {
                             const active = selectedItems.find(x => x.id === i.id);
-                            const hasText = i.title || i.description;
+                            const hasText = i.title || i.description || i.category;
                             
                             return (
                                 <div 
@@ -443,7 +772,7 @@
                                     <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-5 sm:p-8 transition-opacity duration-500 ${hasText ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                                         {hasText && (
                                             <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                                                {i.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.4em] mb-2 sm:mb-3 block">{i.category}</span>}
+                                                {i.category && i.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-300 uppercase tracking-[0.4em] mb-2 sm:mb-3 block line-clamp-1">{i.category}</span>}
                                                 {i.title && <h3 className="font-black text-xl sm:text-2xl lg:text-3xl text-white uppercase leading-none mb-2 sm:mb-3 tracking-tighter">{i.title}</h3>}
                                                 {i.description && <p className="text-xs sm:text-sm text-gray-300 line-clamp-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500 font-medium">{i.description}</p>}
                                             </div>
@@ -471,15 +800,19 @@
                         >
                             <button 
                                 onClick={(e) => { e.stopPropagation(); showPrev(); }}
-                                className="hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 items-center justify-center transition-all active:scale-90"
+                                className="hidden lg:flex absolute left-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:scale-105 items-center justify-center transition-all active:scale-90"
                             >
-                                <Icon name="chevron-left" size={40} />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="15 18 9 12 15 6"></polyline>
+                                </svg>
                             </button>
                             <button 
                                 onClick={(e) => { e.stopPropagation(); showNext(); }}
-                                className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 items-center justify-center transition-all active:scale-90"
+                                className="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 z-[120] w-16 h-16 rounded-full bg-white shadow-lg border border-gray-200 text-gray-500 hover:text-gray-900 hover:scale-105 items-center justify-center transition-all active:scale-90"
                             >
-                                <Icon name="chevron-right" size={40} />
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
                             </button>
 
                             <div className="max-w-6xl w-full h-full flex flex-col items-center justify-center modal-fade-in relative z-[110]" onClick={e => e.stopPropagation()}>
@@ -492,16 +825,20 @@
                                     />
                                     <button 
                                         onClick={() => setPreviewItem(null)}
-                                        className="absolute top-3 right-3 lg:top-5 lg:right-5 bg-black/70 backdrop-blur-md p-2 lg:p-3 rounded-full text-white hover:bg-black transition-all z-[130] shadow-xl"
+                                        className="absolute top-3 right-3 lg:top-4 lg:right-4 bg-gray-900/90 backdrop-blur-md p-1.5 lg:p-2 rounded-full text-white hover:bg-black hover:scale-105 transition-all z-[130] shadow-xl border border-white/20 flex items-center justify-center"
+                                        title="Закрыть"
                                     >
-                                        <Icon name="x" className="w-4 h-4 lg:w-6 lg:h-6" />
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                        </svg>
                                     </button>
                                 </div>
-                                {(previewItem.title || previewItem.category !== 'Прочее') && (
+                                {(previewItem.title || previewItem.description || previewItem.category) && (
                                     <div className="mt-8 lg:mt-10 text-center max-w-3xl px-4 lg:px-6">
-                                        {previewItem.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.5em] mb-2 lg:mb-3 block">{previewItem.category}</span>}
-                                        <h2 className="text-2xl lg:text-5xl font-black text-gray-900 uppercase mb-3 lg:mb-4 tracking-tighter leading-none">{previewItem.title}</h2>
-                                        <p className="text-gray-500 text-sm lg:text-lg font-medium leading-relaxed">{previewItem.description}</p>
+                                        {previewItem.category && previewItem.category !== 'Прочее' && <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.5em] mb-2 lg:mb-3 block">{previewItem.category}</span>}
+                                        {previewItem.title && <h2 className="text-2xl lg:text-5xl font-black text-gray-900 uppercase mb-3 lg:mb-4 tracking-tighter leading-none">{previewItem.title}</h2>}
+                                        {previewItem.description && <p className="text-gray-500 text-sm lg:text-lg font-medium leading-relaxed">{previewItem.description}</p>}
                                     </div>
                                 )}
                                 <div className="mt-6 lg:mt-8 text-[10px] lg:text-xs font-black text-gray-400 uppercase tracking-[0.5em]">
@@ -524,6 +861,22 @@
             const [submitted, setSubmitted] = useState(false);
             const [sending, setSending] = useState(false);
             const [warn, setWarn] = useState(false);
+
+            const handleFileUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (!files.length) return;
+                
+                const newItems = files.map((file, idx) => ({
+                    id: `local-${Date.now()}-${idx}`,
+                    category: 'Свой файл',
+                    title: file.name,
+                    description: 'Загружено с устройства',
+                    image: URL.createObjectURL(file),
+                    isLocal: true
+                }));
+                
+                setSelectedItems(prev => [...prev, ...newItems]);
+            };
 
             const send = async () => {
                 if (!formData.dateFromObj || !formData.dateToObj) return;
@@ -672,9 +1025,15 @@
                         <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                                 <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-purple-600">05. Референсы ({selectedItems.length})</h3>
-                                <button type="button" onClick={onAddMore} className="btn-secondary px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95">
-                                    <Icon name="plus" size={12} className="text-purple-600"/> Выбрать еще
-                                </button>
+                                <div className="flex flex-wrap gap-2">
+                                    <label className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95 cursor-pointer">
+                                        <Icon name="upload" size={12} className="text-purple-600"/> С устройства
+                                        <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} />
+                                    </label>
+                                    <button type="button" onClick={onAddMore} className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 active:scale-95">
+                                        <Icon name="layout-grid" size={12} className="text-purple-600"/> Из базы
+                                    </button>
+                                </div>
                             </div>
                             {selectedItems.length > 0 ? (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -682,7 +1041,7 @@
                                         <div key={item.id} className="bg-white/80 border border-gray-200 rounded-xl p-2.5 flex items-center gap-3 group shadow-sm hover:shadow-md transition-shadow">
                                             <img src={item.image || 'https://images.unsplash.com/photo-1546069901-ba6e64c1ddf2?w=200'} className="w-12 h-12 rounded-lg object-cover transition-all" />
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[8px] text-purple-500 font-black uppercase tracking-widest mb-0.5">{item.category}</p>
+                                                <p className="text-[8px] text-purple-500 font-black uppercase tracking-widest mb-0.5 truncate">{item.category || 'Без категории'}</p>
                                                 <p className="text-xs font-black truncate uppercase tracking-tight text-gray-900">{item.title || 'Без названия'}</p>
                                             </div>
                                             <button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"><Icon name="x" size={14} /></button>
