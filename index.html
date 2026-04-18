@@ -24,13 +24,16 @@
         html { background-color: #f9fafb; }
         body { font-family: 'Inter', sans-serif; margin: 0; overflow-x: hidden; background-color: transparent; color: #111827; padding-top: env(safe-area-inset-top); }
         
+        /* Фоны */
         .bg-container { position: fixed; inset: 0; background-color: #e5e7eb; background-image: url('bg-mobile.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; z-index: -2; }
         .bg-overlay { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.2); z-index: -1; }
         @media (min-width: 1024px) { .bg-container { background-image: url('bg-desktop.jpg'); } }
 
+        /* Дизайн */
         .glass-card { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05); transition: all 0.3s; }
         .btn-primary { background: linear-gradient(135deg, var(--accent-light) 0%, #9333ea 100%); color: white; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1); box-shadow: 0 10px 25px -5px rgba(126, 34, 206, 0.4); }
         
+        /* Календарь */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
         .calendar-day { aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; font-size: 0.875rem; transition: all 0.2s; font-weight: 600; }
         .day-selected { background: var(--accent-light) !important; color: white !important; }
@@ -55,7 +58,7 @@
         const SHEETDB_API_URL = 'https://sheetdb.io/api/v1/hij5zlohk9jho';
         const FORMSPREE_ID = 'xqewzvbe'; 
 
-        // --- 1. ПРИСУТСТВУЮЩИЕ КОМПОНЕНТЫ ---
+        // --- 1. ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
 
         const DateRangePicker = ({ startDate, endDate, onChange }) => {
             const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -79,9 +82,9 @@
             return (
                 <div className="glass-card rounded-[2rem] p-6 select-none shadow-lg border border-white/50">
                     <div className="flex justify-between items-center mb-6">
-                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"><Icon name="chevron-left" /></button>
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))} className="p-2 bg-gray-100 rounded-lg"><Icon name="chevron-left" /></button>
                         <h4 className="font-black uppercase tracking-widest text-[10px]">{months[currentMonth.getMonth()]} {currentMonth.getFullYear()}</h4>
-                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"><Icon name="chevron-right" /></button>
+                        <button type="button" onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))} className="p-2 bg-gray-100 rounded-lg"><Icon name="chevron-right" /></button>
                     </div>
                     <div className="calendar-grid gap-1">
                         {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(d => <div key={d} className="text-[9px] font-black text-gray-400 text-center uppercase py-2">{d}</div>)}
@@ -97,7 +100,7 @@
             <div className="max-w-5xl mx-auto px-6 py-12 lg:py-24 flex flex-col items-center justify-center text-center min-h-[60vh] text-gray-900">
                 <h1 className="text-5xl lg:text-8xl font-black leading-[0.9] tracking-tighter uppercase mb-8">Лаборатория <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-purple-800 text-glow">Хитов</span></h1>
                 <p className="text-lg lg:text-xl font-bold uppercase tracking-widest mb-10 max-w-2xl drop-shadow-[0_0_15px_white]">Проектируем гастрономические смыслы. <br className="hidden md:block"/> От идеи до идеальной подачи.</p>
-                <button onClick={onNext} className="btn-primary px-12 py-5 rounded-full text-base font-black uppercase tracking-widest flex items-center gap-3 mx-auto shadow-xl transition-all active:scale-95">Портфолио <Icon name="arrow-right" size={18} /></button>
+                <button onClick={onNext} className="btn-primary px-12 py-5 rounded-full text-base font-black uppercase tracking-widest flex items-center gap-3 mx-auto shadow-xl transition-all">Портфолио <Icon name="arrow-right" size={18} /></button>
             </div>
         );
 
@@ -110,7 +113,7 @@
             
             const filtered = useMemo(() => {
                 if (cat === 'Все') return list;
-                return list.filter(i => i.category && i.category.split(',').map(c => c.trim()).includes(cat));
+                return list.filter(i => i && i.category && i.category.split(',').map(c => c.trim()).includes(cat));
             }, [list, cat]);
 
             const toggle = (i) => {
@@ -134,24 +137,25 @@
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                              <div className="flex flex-wrap gap-1.5">{['Все', ...(Array.isArray(categories) ? categories : [])].map(c => <button key={c} onClick={() => setCat(c)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase transition-all shadow-sm ${cat === c ? 'bg-purple-600 text-white shadow-purple-600/20' : 'bg-white/60 border border-gray-100 text-gray-500 hover:text-gray-900'}`}>{c}</button>)}</div>
                              <button onClick={onNext} className="btn-primary px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-lg active:scale-95">
-                                {safeSelected.length > 0 ? <>Составить ТЗ ({safeSelected.length}) <Icon name="chevron-right" size={14}/></> : <>Начать бриф <Icon name="edit-3" size={14}/></>}
+                                {safeSelected.length > 0 ? <>Оформить ТЗ ({safeSelected.length}) <Icon name="chevron-right" size={14}/></> : <>Начать бриф <Icon name="edit-3" size={14}/></>}
                              </button>
                         </div>
                     </div>
                     
                     <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-10">
                         {filtered.map(i => {
+                            if (!i || !i.id) return null;
                             const active = safeSelected.find(x => x.id === i.id);
                             return (
                                 <div key={i.id} onClick={() => setPreviewItem(i)} className={`group relative aspect-square rounded-xl sm:rounded-[2.5rem] overflow-hidden border transition-all duration-500 cursor-zoom-in bg-gray-200 ${active ? 'border-purple-600 ring-2 sm:ring-8 ring-purple-600/10 shadow-xl' : 'border-transparent'}`}>
                                     <img src={i.image} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-all duration-1000 group-hover:scale-110" />
                                     
-                                    {/* Кнопка ПЛЮСИК: всегда видна на мобилках */}
+                                    {/* ПЛЮСИК: всегда видим и нажимаем */}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); toggle(i); }} 
-                                        className={`absolute bottom-1.5 right-1.5 sm:bottom-6 sm:right-6 w-9 h-9 sm:w-14 sm:h-14 rounded-lg sm:rounded-2xl flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 ${active ? 'bg-purple-600 text-white' : 'bg-gray-900/90 backdrop-blur-md text-white sm:opacity-0 sm:group-hover:opacity-100'}`}
+                                        className={`absolute bottom-2 right-2 sm:bottom-6 sm:right-6 w-9 h-9 sm:w-16 sm:h-16 rounded-xl flex items-center justify-center shadow-2xl transition-all active:scale-90 z-20 ${active ? 'bg-purple-600 text-white' : 'bg-gray-900/90 backdrop-blur-md text-white'}`}
                                     >
-                                        <Icon name={active ? 'check' : 'plus'} size={active ? 16 : 22} />
+                                        <Icon name={active ? 'check' : 'plus'} size={active ? 16 : 24} />
                                     </button>
                                 </div>
                             );
@@ -167,14 +171,14 @@
                     {previewItem && (
                         <div className="fixed inset-0 z-[100] bg-gray-900/40 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setPreviewItem(null)}>
                             <div className="max-w-6xl w-full h-full flex flex-col items-center justify-center modal-fade-in relative z-[110]" onClick={e => e.stopPropagation()}>
-                                <div className="relative group">
+                                <div className="relative">
                                     <img src={previewItem.image} className="max-h-[60vh] lg:max-h-[75vh] w-auto rounded-[2rem] shadow-2xl border border-gray-200 object-contain cursor-zoom-out bg-white" onClick={() => setPreviewItem(null)} />
-                                    <button onClick={() => setPreviewItem(null)} className="absolute -top-3 -right-3 sm:top-4 sm:right-4 p-3 bg-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-transform z-[150]"><Icon name="x" size={24}/></button>
+                                    <button onClick={() => setPreviewItem(null)} className="absolute -top-3 -right-3 sm:top-4 sm:right-4 p-4 bg-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-transform z-[150]"><Icon name="x" size={24}/></button>
                                 </div>
                                 <div className="mt-6 text-center max-w-2xl px-6 flex flex-col items-center">
                                     {previewItem.category && <span className="text-[10px] font-black text-purple-600 uppercase tracking-[0.5em] mb-2 block">{previewItem.category}</span>}
                                     {previewItem.title && <h2 className="text-xl lg:text-5xl font-black text-gray-900 uppercase mb-4 leading-none tracking-tighter">{previewItem.title}</h2>}
-                                    <button onClick={(e) => { e.stopPropagation(); toggle(previewItem); }} className={`px-10 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl font-black uppercase text-xs ${safeSelected.find(x => x.id === previewItem.id) ? 'bg-purple-600 text-white' : 'bg-gray-900 text-white'}`}><Icon name={safeSelected.find(x => x.id === previewItem.id) ? 'check' : 'plus'} size={20} />{safeSelected.find(x => x.id === previewItem.id) ? 'Удалить из брифа' : '+ Добавить в бриф'}</button>
+                                    <button onClick={(e) => { e.stopPropagation(); toggle(previewItem); }} className={`px-10 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-95 shadow-xl font-black uppercase text-xs ${safeSelected.find(x => x.id === previewItem.id) ? 'bg-red-500 text-white' : 'bg-purple-600 text-white'}`}><Icon name={safeSelected.find(x => x.id === previewItem.id) ? 'trash' : 'plus'} size={20} />{safeSelected.find(x => x.id === previewItem.id) ? 'Удалить из брифа' : '+ Добавить в бриф'}</button>
                                 </div>
                             </div>
                         </div>
@@ -203,7 +207,7 @@
 
             const downloadImage = (base64, filename) => {
                 const link = document.createElement("a");
-                link.href = base64; link.download = filename || "reference.jpg";
+                link.href = base64; link.download = filename || "ref.jpg";
                 document.body.appendChild(link); link.click(); document.body.removeChild(link);
             };
 
@@ -239,13 +243,15 @@
                 } catch (err) { setStatusMsg("Ошибка"); }
             };
 
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [adminTab, previewBrief]);
+
             return (
                 <div className="max-w-4xl mx-auto px-6 py-12 space-y-10 pb-32">
                     {unreadCount > 0 && adminTab !== 'briefs' && (
                         <button onClick={() => setAdminTab('briefs')} className="w-full bg-red-500 text-white p-4 rounded-2xl flex items-center justify-between shadow-xl modal-fade-in animate-pulse"><span className="font-black uppercase text-xs tracking-widest flex items-center gap-2"><Icon name="mail-warning" size={18}/> {unreadCount} новые заявки!</span><span className="text-[10px] font-bold underline">Смотреть</span></button>
                     )}
                     <div className="flex justify-between items-start">
-                        <div className="flex-1"><h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3">УПРАВЛЕНИЕ</h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Лаборатория хитов ЧИКО</p></div>
+                        <div className="flex-1"><h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 text-gray-900">УПРАВЛЕНИЕ</h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em]">Админ-панель ЧИКО</p></div>
                         <button onClick={onLogout} className="bg-white/60 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors shadow-sm"><Icon name="log-out" size={20} /></button>
                     </div>
                     <div className="flex bg-gray-100 p-1.5 rounded-2xl w-fit mx-auto shadow-inner border border-gray-200">
@@ -293,8 +299,8 @@
                     {previewBrief && (
                         <div className="fixed inset-0 z-[150] bg-gray-900/60 backdrop-blur-xl flex items-center justify-center p-4 lg:p-10 modal-fade-in cursor-zoom-out" onClick={() => setPreviewBrief(null)}>
                             <div className="bg-white max-w-4xl w-full max-h-full overflow-y-auto rounded-[2.5rem] shadow-2xl p-6 lg:p-12 cursor-default relative scrollbar-hide" onClick={e => e.stopPropagation()}>
-                                <button onClick={() => setPreviewBrief(null)} className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-[160]"><Icon name="x" size={20}/></button>
-                                <div className="mb-10 text-center"><p className="text-[10px] text-purple-600 font-black uppercase tracking-[0.5em] mb-3">{previewBrief['Дата']}</p><h2 className="text-3xl lg:text-5xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-4">Техническое задание</h2><div className="h-1 w-20 bg-purple-600 mx-auto rounded-full"></div></div>
+                                <button onClick={() => setPreviewBrief(null)} className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-[160]"><Icon name="x" size={24}/></button>
+                                <div className="mb-10 text-center"><p className="text-[10px] text-purple-600 font-black uppercase tracking-[0.5em] mb-3">{previewBrief['Дата']}</p><h2 className="text-2xl lg:text-5xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-4">Техническое задание</h2><div className="h-1 w-20 bg-purple-600 mx-auto rounded-full"></div></div>
                                 <div className="grid md:grid-cols-2 gap-8 lg:gap-12 mb-10 text-gray-900">
                                     <div className="space-y-6">
                                         <div className="space-y-1"><span className="text-[9px] text-gray-400 font-black uppercase tracking-widest block">Заказчик / Компания</span><p className="text-xl font-black uppercase">{previewBrief['Имя']}</p></div>
@@ -309,7 +315,7 @@
                                 {previewBrief.selectedImageData && previewBrief.selectedImageData.length > 0 && (
                                     <div className="mb-10 space-y-4"><span className="text-[10px] text-gray-900 font-black uppercase tracking-widest flex items-center gap-2"><Icon name="images" size={16} className="text-purple-600"/> Визуальный мудборд ({previewBrief.selectedImageData.length})</span><div className="grid grid-cols-2 sm:grid-cols-4 gap-4">{previewBrief.selectedImageData.map((img, idx) => (<div key={idx} className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm"><img src={img.image} className="w-full h-full object-cover" /><button onClick={() => downloadImage(img.image, `ref-${idx}.jpg`)} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2"><Icon name="download" size={24}/><span className="text-[8px] font-black uppercase">Скачать</span></button></div>))}</div></div>
                                 )}
-                                <div className="pt-10 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-50"><div className="text-center sm:text-left"><p className="text-[8px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Лаборатория вкуса</p><p className="text-xs font-black text-gray-900 uppercase">TasteLab Gastronomy</p></div><div className="text-center sm:text-right"><p className="text-[8px] font-black uppercase tracking-[0.3em] text-gray-400 mb-1">Статус документа</p><p className="text-xs font-black text-green-600 uppercase flex items-center gap-2 justify-center sm:justify-end"><Icon name="shield-check" size={14}/> Принято в работу</p></div></div>
+                                <div className="pt-10 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-50 text-gray-400"><div className="text-center sm:text-left"><p className="text-[8px] font-black uppercase tracking-[0.3em] mb-1">Лаборатория вкуса</p><p className="text-xs font-black uppercase">TasteLab Gastronomy</p></div><div className="text-center sm:text-right"><p className="text-[8px] font-black uppercase tracking-[0.3em] mb-1">Статус документа</p><p className="text-xs font-black text-green-600 uppercase flex items-center gap-2 justify-center sm:justify-end"><Icon name="shield-check" size={14}/> Принято в работу</p></div></div>
                             </div>
                         </div>
                     )}
@@ -367,20 +373,7 @@
             const inputClass = "w-full bg-white/60 border border-gray-200 p-4 rounded-xl outline-none focus:border-purple-400 font-medium text-sm text-gray-900 transition-all focus:bg-white shadow-inner";
             
             return (
-                <div className="max-w-4xl mx-auto px-6 py-8 space-y-12 pb-24 text-gray-900">
-                    <div className="text-center"><h2 className="text-4xl lg:text-6xl font-black uppercase mb-3 tracking-tighter text-glow leading-none">БРИФИНГ</h2><p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">Сборка технического задания</p></div>
-                    <form onSubmit={e => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-8">
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase">01. Контакты</h3><div className="grid md:grid-cols-2 gap-5"><input required placeholder="ФИО / Компания *" className={inputClass} value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} /><input required placeholder="Город *" className={inputClass} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} /></div><input required placeholder="Telegram / WhatsApp *" className={inputClass} value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} /></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2">02. Тайминг</h3><DateRangePicker startDate={formData.dateFromObj} endDate={formData.dateToObj} onChange={(start, end) => setFormData({...formData, dateFromObj: start, dateToObj: end})} /></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">03. Концепт</h3><textarea required placeholder="Опишите ваши идеи *" className={`${inputClass} h-32 resize-none`} value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} /><input placeholder="Ссылка на материалы" className={inputClass} value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} /></div>
-                        <div className="space-y-4"><h3 className="text-[10px] font-black text-purple-600 uppercase ml-2 tracking-widest">04. Объемы</h3><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{['Десерты', 'Бар', 'Кухня', 'Прочее'].map(c => <div key={c} className="glass-card p-4 rounded-xl border flex flex-col gap-3 group hover:border-purple-300 transition-colors shadow-sm"><span className="text-[9px] font-black uppercase text-gray-400 truncate tracking-widest">{c}</span><div className="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100"><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-7 h-7 bg-white rounded flex items-center justify-center shadow-sm text-gray-500 hover:text-gray-900 transition-colors"><Icon name="minus" size={12} /></button><span className="font-black text-gray-900">{dishCounts[c]||0}</span><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-7 h-7 bg-purple-600 text-white rounded flex items-center justify-center shadow-sm hover:bg-purple-700 transition-colors"><Icon name="plus" size={12} /></button></div></div>)}</div></div>
-                        <div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6">
-                            <div className="flex justify-between items-center gap-4"><h3 className="text-[10px] font-black uppercase text-purple-600 tracking-widest">05. Референсы ({safeSelected.length})</h3><div className="flex gap-2"><label className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase cursor-pointer flex items-center gap-2 hover:bg-purple-50 transition-colors shadow-sm"><Icon name="upload" size={12} className="text-purple-600"/> {uploading || "С устройства"} <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} /></label><button type="button" onClick={onAddMore} className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 hover:bg-purple-50 transition-colors shadow-sm"><Icon name="layout-grid" size={12} className="text-purple-600"/> Из базы</button></div></div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{safeSelected.map(item => <div key={item.id} className="bg-white/80 border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"><img src={item.image} className="w-10 h-10 rounded-lg object-cover bg-gray-50" /><p className="flex-1 text-xs font-black truncate uppercase text-gray-900 leading-none">{item.title || 'Блюдо'}</p><button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="text-gray-400 hover:text-red-500 transition-colors"><Icon name="x" size={14} /></button></div>)}{safeSelected.length === 0 && <p className="text-[10px] font-black text-gray-300 uppercase text-center py-8 border-2 border-dashed border-gray-100 rounded-xl w-full col-span-full tracking-widest">Пусто</p>}</div>
-                        </div>
-                        <button type="submit" disabled={sending || !!uploading} className="w-full btn-primary py-5 rounded-[1.5rem] font-black text-lg uppercase disabled:opacity-50 transition-all mt-2 shadow-xl tracking-[0.2em] active:scale-95">{sending ? 'Отправка...' : 'Отправить ТЗ в работу'}</button>
-                    </form>
-                </div>
+                <div className="max-w-4xl mx-auto px-6 py-8 space-y-12 pb-24 text-gray-900"><div className="text-center"><h2 className="text-4xl lg:text-6xl font-black uppercase mb-3 tracking-tighter text-glow leading-none">БРИФИНГ</h2><p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.4em] mt-2">Сборка технического задания</p></div><form onSubmit={e => { e.preventDefault(); !formData.concept ? setWarn(true) : send(); }} className="space-y-8"><div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase">01. Контакты</h3><div className="grid md:grid-cols-2 gap-5"><input required placeholder="ФИО / Компания *" className={inputClass} value={formData.fullName} onChange={e => setFormData({...formData, fullName: e.target.value})} /><input required placeholder="Город *" className={inputClass} value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} /></div><input required placeholder="Telegram / WhatsApp *" className={inputClass} value={formData.contacts} onChange={e => setFormData({...formData, contacts: e.target.value})} /></div><div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest mb-2">02. Тайминг</h3><DateRangePicker startDate={formData.dateFromObj} endDate={formData.dateToObj} onChange={(start, end) => setFormData({...formData, dateFromObj: start, dateToObj: end})} /></div><div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><h3 className="text-[10px] font-black text-purple-600 uppercase tracking-widest">03. Концепт</h3><textarea required placeholder="Опишите ваши идеи *" className={`${inputClass} h-32 resize-none`} value={formData.concept} onChange={e => setFormData({...formData, concept: e.target.value})} /><input placeholder="Ссылка на материалы" className={inputClass} value={formData.menuLink} onChange={e => setFormData({...formData, menuLink: e.target.value})} /></div><div className="space-y-4"><h3 className="text-[10px] font-black text-purple-600 uppercase ml-2 tracking-widest">04. Объемы</h3><div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{['Десерты', 'Бар', 'Кухня', 'Прочее'].map(c => <div key={c} className="glass-card p-4 rounded-xl border flex flex-col gap-3 group hover:border-purple-300 transition-colors shadow-sm"><span className="text-[9px] font-black uppercase text-gray-400 truncate tracking-widest">{c}</span><div className="flex items-center justify-between bg-gray-50 p-1.5 rounded-lg border border-gray-100"><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: Math.max(0, (dishCounts[c]||0)-1)})} className="w-7 h-7 bg-white rounded flex items-center justify-center shadow-sm text-gray-500 hover:text-gray-900 transition-colors"><Icon name="minus" size={12} /></button><span className="font-black text-gray-900">{dishCounts[c]||0}</span><button type="button" onClick={() => setDishCounts({...dishCounts, [c]: (dishCounts[c]||0)+1})} className="w-7 h-7 bg-purple-600 text-white rounded flex items-center justify-center shadow-sm hover:bg-purple-700 transition-colors"><Icon name="plus" size={12} /></button></div></div>)}</div></div><div className="glass-card p-6 lg:p-10 rounded-[2rem] space-y-6"><div className="flex justify-between items-center gap-4"><h3 className="text-[10px] font-black uppercase text-purple-600 tracking-widest">05. Референсы ({safeSelected.length})</h3><div className="flex gap-2"><label className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase cursor-pointer flex items-center gap-2 hover:bg-purple-50 transition-colors shadow-sm"><Icon name="upload" size={12} className="text-purple-600"/> {uploading || "С устройства"} <input type="file" multiple accept="image/*" className="hidden" onChange={handleFileUpload} /></label><button type="button" onClick={onAddMore} className="btn-secondary px-4 py-2 rounded-lg text-[9px] font-black uppercase flex items-center gap-2 hover:bg-purple-50 transition-colors shadow-sm"><Icon name="layout-grid" size={12} className="text-purple-600"/> Из базы</button></div></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{safeSelected.map(item => <div key={item.id} className="bg-white/80 border rounded-xl p-2.5 flex items-center gap-3 shadow-sm hover:shadow-md transition-all"><img src={item.image} className="w-10 h-10 rounded-lg object-cover bg-gray-50" /><p className="flex-1 text-xs font-black truncate uppercase text-gray-900 leading-none">{item.title || 'Блюдо'}</p><button type="button" onClick={() => setSelectedItems(prev => prev.filter(x => x.id !== item.id))} className="text-gray-400 hover:text-red-500 transition-colors"><Icon name="x" size={14} /></button></div>)}{safeSelected.length === 0 && <p className="text-[10px] font-black text-gray-300 uppercase text-center py-8 border-2 border-dashed border-gray-100 rounded-xl w-full col-span-full tracking-widest">Пусто</p>}</div></div><button type="submit" disabled={sending || !!uploading} className="w-full btn-primary py-5 rounded-[1.5rem] font-black text-lg uppercase disabled:opacity-50 transition-all mt-2 shadow-xl tracking-[0.2em] active:scale-95">{sending ? 'Отправка...' : 'Отправить ТЗ в работу'}</button></form></div>
             );
         };
 
@@ -388,7 +381,6 @@
 
         function App() {
             const [activeTab, setActiveTab] = useState('welcome');
-            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
             const [selectedItems, setSelectedItems] = useState([]);
             const [portfolioItems, setPortfolioItems] = useState([]);
             const [categories, setCategories] = useState([]);
@@ -414,14 +406,7 @@
                             importModule('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js'),
                             importModule('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js')
                         ]);
-                        const firebaseConfig = {
-                            apiKey: "AIzaSyCbsJUDJ4AMJBi_UOnX23n-T-vGq4O4mGs",
-                            authDomain: "menubuild-c3fc6.firebaseapp.com",
-                            projectId: "menubuild-c3fc6",
-                            storageBucket: "menubuild-c3fc6.firebasestorage.app",
-                            messagingSenderId: "1013946778157",
-                            appId: "1:1013946778157:web:cd1225bfeb3426720aeea4"
-                        };
+                        const firebaseConfig = { apiKey: "AIzaSyCbsJUDJ4AMJBi_UOnX23n-T-vGq4O4mGs", authDomain: "menubuild-c3fc6.firebaseapp.com", projectId: "menubuild-c3fc6", storageBucket: "menubuild-c3fc6.firebasestorage.app", messagingSenderId: "1013946778157", appId: "1:1013946778157:web:cd1225bfeb3426720aeea4" };
                         const app = appMod.initializeApp(firebaseConfig);
                         const auth = authMod.getAuth(app);
                         const db = fsMod.getFirestore(app);
@@ -437,8 +422,7 @@
                 const initAuth = async () => {
                     try {
                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            try { await authMod.signInWithCustomToken(auth, __initial_auth_token); } 
-                            catch (e) { await authMod.signInAnonymously(auth); }
+                            try { await authMod.signInWithCustomToken(auth, __initial_auth_token); } catch (e) { await authMod.signInAnonymously(auth); }
                         } else { await authMod.signInAnonymously(auth); }
                     } catch (e) { setDbError("Ошибка авторизации"); setIsLoadingData(false); }
                 };
@@ -461,20 +445,15 @@
                 });
                 const unsubBriefs = fsMod.onSnapshot(fsMod.collection(db, 'artifacts', appId, 'public', 'data', 'briefs'), (snapshot) => {
                     const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    items.sort((a, b) => (a.createdAt || 0) - (a.createdAt || 0));
+                    items.sort((a, b) => (a.order || 0) - (b.order || 0));
                     setBriefs(items);
                     setTimeout(() => window.lucide && window.lucide.createIcons(), 100);
                 });
                 return () => { unsubPort(); unsubBriefs(); };
             }, [fb, user, appId]);
 
-            const navigateTo = (tab) => { setActiveTab(tab); setMobileMenuOpen(false); window.scrollTo(0, 0); };
-            const handleLogin = () => {
-                if (adminPwd === 'Kursant2026') {
-                    setIsAdmin(true); localStorage.setItem('is_tastelab_admin', 'true');
-                    setShowAdminAuth(false); setAdminPwd(''); navigateTo('admin');
-                } else { setAdminPwdError(true); }
-            };
+            const navigateTo = (tab) => { setActiveTab(tab); window.scrollTo(0, 0); };
+            const handleLogin = () => { if (adminPwd === 'Kursant2026') { setIsAdmin(true); localStorage.setItem('is_tastelab_admin', 'true'); setShowAdminAuth(false); setAdminPwd(''); navigateTo('admin'); } else { setAdminPwdError(true); } };
 
             const unreadCount = (briefs || []).filter(b => b && b.isRead === false).length;
 
@@ -482,7 +461,7 @@
 
             return (
                 <div className="min-h-screen relative text-gray-900">
-                    <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+                    <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm transition-all duration-500">
                         <div className="max-w-7xl mx-auto px-6 h-20 lg:h-24 flex justify-between items-center">
                             <div className="text-2xl lg:text-3xl font-black tracking-tighter cursor-pointer" onClick={() => navigateTo('welcome')}>TASTE<span className="font-light text-gray-400">LAB</span></div>
                             <div className="hidden md:flex space-x-10 items-center">
@@ -490,7 +469,7 @@
                                 <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest ${activeTab === 'portfolio' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}>Портфолио</button>
                                 <button onClick={() => navigateTo('brief')} className="btn-primary px-8 py-3 rounded-full text-sm font-black uppercase tracking-widest flex items-center gap-3 shadow-lg">ТЗ {selectedItems?.length > 0 && <span className="bg-white text-gray-900 px-2.5 py-0.5 rounded-full text-[10px]">{selectedItems.length}</span>}</button>
                             </div>
-                            <button className="md:hidden text-gray-600 p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}><Icon name={mobileMenuOpen ? "x" : "menu"} size={28} /></button>
+                            <button className="md:hidden text-gray-600 p-2" onClick={() => navigateTo(activeTab === 'portfolio' ? 'brief' : 'portfolio')}><Icon name={activeTab === 'portfolio' ? "send" : "menu"} size={28} /></button>
                         </div>
                     </nav>
 
