@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TASTELAB — Premium Gastronomy Lab</title>
+    <title>Kursant Asia Chef — Premium Gastronomy Lab</title>
     
     <!-- Настройки для iOS (PWA) -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TasteLab">
-    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/initials/svg?seed=TL&backgroundColor=7e22ce&fontSize=50&fontWeight=900">
+    <meta name="apple-mobile-web-app-title" content="KursantAsia">
+    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/initials/svg?seed=KA&backgroundColor=7e22ce&fontSize=50&fontWeight=900">
     
     <!-- Библиотеки -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -192,7 +192,7 @@
                             <div className="h-1 w-16 bg-purple-600 mx-auto mt-6 rounded-full"></div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row justify-center items-start gap-12 lg:gap-24">
+                        <div className="flex flex-col md:flex-row justify-center items-start gap-12 lg:gap-24 text-gray-900">
                             {chefs.map((chef) => (
                                 <div key={chef.id} className="flex flex-col group text-left w-full max-w-[320px] mx-auto md:mx-0">
                                     <div className="relative w-full aspect-[4/5] rounded-[2rem] overflow-hidden shadow-2xl mb-8 border border-gray-100 bg-gray-200">
@@ -363,7 +363,7 @@
                                     <img src={previewItem.image} className="max-h-[65vh] lg:max-h-[85vh] w-auto rounded-[1.5rem] object-contain cursor-zoom-in bg-white" />
                                     <button onClick={() => setPreviewItem(null)} className="absolute -top-3 -right-3 sm:top-4 sm:right-4 p-2.5 bg-gray-900 text-white rounded-full shadow-2xl hover:scale-110 transition-transform z-[150] flex items-center justify-center"><Icon name="x" size={18}/></button>
                                 </div>
-                                <div className="mt-6 text-center max-w-2xl px-6 flex flex-col items-center">
+                                <div className="mt-6 text-center max-w-2xl px-6 flex flex-col items-center text-gray-900">
                                     {previewItem.category && <span className="text-[10px] font-black text-purple-400 uppercase tracking-[0.5em] mb-2 block">{previewItem.category}</span>}
                                     {previewItem.title && <h2 className="text-xl lg:text-5xl font-black text-white uppercase mb-6 leading-none tracking-tighter drop-shadow-xl">{previewItem.title}</h2>}
                                     <button onClick={(e) => { e.stopPropagation(); toggle(previewItem); }} className={`px-8 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl font-black uppercase text-[10px] tracking-widest ${safeSelected.find(x => x.id === previewItem.id) ? 'bg-red-500 text-white' : 'bg-purple-600 text-white'}`}>
@@ -437,7 +437,7 @@
             return (
                 <div className="max-w-4xl mx-auto px-6 py-12 space-y-10 pb-32 text-gray-900">
                     <div className="flex justify-between items-start">
-                        <div className="flex-1 text-left text-gray-900"><h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 leading-none text-left">УПРАВЛЕНИЕ</h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em] text-left">Лаборатория хитов ЧИКО</p></div>
+                        <div className="flex-1 text-left text-gray-900"><h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter mb-3 leading-none text-left">УПРАВЛЕНИЕ</h2><p className="text-gray-500 font-bold uppercase text-[10px] tracking-[0.4em] text-left">Kursant Asia Chef</p></div>
                         <div className="flex gap-2">
                              <button onClick={onGoToBrief} className="bg-white p-3 rounded-xl text-purple-600 shadow-sm border border-purple-100 transition-colors hover:bg-purple-50"><Icon name="edit-3" size={20} /></button>
                              <button onClick={onLogout} className="bg-white/60 p-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors shadow-sm"><Icon name="log-out" size={20} /></button>
@@ -504,7 +504,7 @@
                                 {previewBrief.selectedImageData && previewBrief.selectedImageData.length > 0 && (
                                     <div className="mb-10 space-y-4 text-gray-900 text-left"><span className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2 text-gray-900 text-left"><Icon name="images" size={16} className="text-purple-600"/> Мудборд ({previewBrief.selectedImageData.length})</span><div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left text-gray-900">{previewBrief.selectedImageData.map((img, idx) => (<div key={idx} className="group relative aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm"><img src={img.image} className="w-full h-full object-cover" /><button onClick={() => downloadImage(img.image, `ref-${idx}.jpg`)} className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2"><Icon name="download" size={20}/><span className="text-[8px] font-black uppercase text-white">Скачать</span></button></div>))}</div></div>
                                 )}
-                                <div className="pt-10 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-50 text-gray-400 text-left"><div className="text-center sm:text-left text-left"><p className="text-[8px] font-black uppercase mb-1 text-left">TasteLab бюро</p><p className="text-xs font-black uppercase tracking-widest text-left">Premium Lab</p></div><div className="text-center sm:text-right text-right"><p className="text-[8px] font-black uppercase mb-1 text-right text-gray-900 font-black">Официальное ТЗ</p><p className="text-xs font-black text-green-600 uppercase flex items-center gap-2 justify-center sm:justify-end text-right"><Icon name="shield-check" size={14}/> Принято в работу</p></div></div>
+                                <div className="pt-10 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6 opacity-50 text-gray-400 text-left"><div className="text-center sm:text-left text-left"><p className="text-[8px] font-black uppercase mb-1 text-left">Kursant Asia Chef бюро</p><p className="text-xs font-black uppercase tracking-widest text-left">Premium Lab</p></div><div className="text-center sm:text-right text-right"><p className="text-[8px] font-black uppercase mb-1 text-right text-gray-900 font-black">Официальное ТЗ</p><p className="text-xs font-black text-green-600 uppercase flex items-center gap-2 justify-center sm:justify-end text-right"><Icon name="shield-check" size={14}/> Принято в работу</p></div></div>
                             </div>
                         </div>
                     )}
@@ -600,7 +600,7 @@
                 onReset();
             };
 
-            if (submitted) return <div className="py-24 text-center max-w-xl mx-auto px-6 modal-fade-in text-gray-900"><div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 text-purple-600 animate-bounce shadow-inner border border-purple-200"><Icon name="check" size={40} /></div><h2 className="text-4xl font-black mb-3 uppercase tracking-tighter text-gray-900 leading-none text-center">ПРИНЯТО</h2><p className="text-gray-500 mb-10 uppercase text-xs font-bold tracking-widest mt-4 text-center text-center">ТЗ в обработке. Ожидайте звонка.</p><button onClick={handleReset} className="text-purple-600 font-black text-sm uppercase tracking-widest border-b-2 border-purple-200 hover:border-purple-600 pb-1 transition-all">Вернуться на главную</button></div>;
+            if (submitted) return <div className="py-24 text-center max-w-xl mx-auto px-6 modal-fade-in text-gray-900"><div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-8 text-purple-600 animate-bounce shadow-inner border border-purple-200"><Icon name="check" size={40} /></div><h2 className="text-4xl font-black mb-3 uppercase tracking-tighter text-gray-900 leading-none text-center">ПРИНЯТО</h2><p className="text-gray-500 mb-10 uppercase text-xs font-bold tracking-widest mt-4 text-center">ТЗ в обработке. Ожидайте звонка.</p><button onClick={handleReset} className="text-purple-600 font-black text-sm uppercase tracking-widest border-b-2 border-purple-200 hover:border-purple-600 pb-1 transition-all">Вернуться на главную</button></div>;
             
             const inputClass = "w-full bg-white/60 border border-gray-200 p-4 rounded-xl outline-none focus:border-purple-400 font-medium text-sm text-gray-900 transition-all focus:bg-white shadow-inner";
             
@@ -693,7 +693,7 @@
             const [dbError, setDbError] = useState(null); 
             const [formData, setFormData] = useState({ fullName: '', city: '', contacts: '', concept: '', dateFromObj: null, dateToObj: null, comment: '' });
             const [dishCounts, setDishCounts] = useState({});
-            const [isAdmin, setIsAdmin] = useState(localStorage.getItem('is_tastelab_admin') === 'true');
+            const [isAdmin, setIsAdmin] = useState(localStorage.getItem('is_kursant_admin') === 'true');
             const [showAdminAuth, setShowAdminAuth] = useState(false);
             const [adminPwd, setAdminPwd] = useState('');
             const [adminPwdError, setAdminPwdError] = useState(false);
@@ -760,7 +760,7 @@
             const handleLogin = () => { 
                 if (adminPwd === 'Kursant2026') { 
                     setIsAdmin(true); 
-                    localStorage.setItem('is_tastelab_admin', 'true'); 
+                    localStorage.setItem('is_kursant_admin', 'true'); 
                     setShowAdminAuth(false); 
                     setAdminPwd(''); 
                     navigateTo('admin'); 
@@ -771,13 +771,13 @@
 
             const unreadCount = (briefs || []).filter(b => b && b.isRead === false).length;
 
-            if (isLoadingData) return <div className="min-h-screen flex flex-col items-center justify-center text-gray-900"><div className="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mb-6"></div><h2 className="text-xl font-black uppercase tracking-[0.5em] text-gray-400 animate-pulse">Tastelab</h2></div>;
+            if (isLoadingData) return <div className="min-h-screen flex flex-col items-center justify-center text-gray-900"><div className="w-16 h-16 border-4 border-gray-200 border-t-purple-600 rounded-full animate-spin mb-6"></div><h2 className="text-xl font-black uppercase tracking-[0.5em] text-gray-400 animate-pulse">KURSANT ASIA CHEF</h2></div>;
 
             return (
                 <div className="min-h-screen relative text-gray-900">
                     <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm transition-all duration-500 text-gray-900">
                         <div className="max-w-7xl mx-auto px-6 h-20 lg:h-24 flex justify-between items-center text-gray-900">
-                            <div className="text-2xl lg:text-3xl font-black tracking-tighter cursor-pointer text-gray-900" onClick={() => navigateTo('welcome')}>TASTE<span className="font-light text-gray-400">LAB</span></div>
+                            <div className="text-2xl lg:text-3xl font-black tracking-tighter cursor-pointer text-gray-900" onClick={() => navigateTo('welcome')}>KURSANT <span className="font-light text-gray-400">ASIA CHEF</span></div>
                             <div className="hidden md:flex space-x-10 items-center">
                                 <button onClick={() => navigateTo('welcome')} className={`text-sm font-bold uppercase tracking-widest ${activeTab === 'welcome' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}>О нас</button>
                                 <button onClick={() => navigateTo('portfolio')} className={`text-sm font-bold uppercase tracking-widest ${activeTab === 'portfolio' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}>Портфолио</button>
@@ -790,7 +790,7 @@
                     <main className="pt-24 lg:pt-32">
                         {activeTab === 'welcome' && <WelcomePage onNext={() => navigateTo('portfolio')} />}
                         {activeTab === 'portfolio' && <PortfolioPage items={portfolioItems} categories={categories} onNext={() => navigateTo('brief')} selectedItems={selectedItems} setSelectedItems={setSelectedItems} />}
-                        {activeTab === 'admin' && <AdminPage fb={fb} appId={appId} portfolioItems={portfolioItems} briefs={briefs} onLogout={() => { setIsAdmin(false); localStorage.removeItem('is_tastelab_admin'); navigateTo('welcome'); }} onGoToBrief={() => navigateTo('brief')} />}
+                        {activeTab === 'admin' && <AdminPage fb={fb} appId={appId} portfolioItems={portfolioItems} briefs={briefs} onLogout={() => { setIsAdmin(false); localStorage.removeItem('is_kursant_admin'); navigateTo('welcome'); }} onGoToBrief={() => navigateTo('brief')} />}
                         {activeTab === 'brief' && <BriefPage fb={fb} appId={appId} categories={categories} selectedItems={selectedItems} setSelectedItems={setSelectedItems} formData={formData} setFormData={setFormData} dishCounts={dishCounts} setDishCounts={setDishCounts} onReset={() => navigateTo('welcome')} onAddMore={() => navigateTo('portfolio')} />}
                     </main>
 
